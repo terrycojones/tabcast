@@ -1,0 +1,14 @@
+{
+  "name": "Tabcast",
+  "description": "Receive and display URLs from tabcast browser extensions.",
+  "version": "0.0.1",
+  "private": false,
+  "dependencies": {
+    "express": "3.0.2",
+    "ejs": "0.8.3",
+    "jade": "*",
+    "redis": "*",
+    "socket.io": "0.9.11",
+    "websocket": "1.0.7"
+  }
+}
