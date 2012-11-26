@@ -143,14 +143,19 @@ var TC = {
 
         var init = function(){
             chrome.tabs.onCreated.addListener(function(tab){
+                console.log('tab ' + tab.id + ' created for url ' + tab.url);
                 var broadcastSocket = {};
                 for (var nickname in shared.endpoints){
                     broadcastSocket[nickname] = null;
                 };
+                var tracking = checkIfTabIsOpeningAnEndpoint(tab);
                 tabs[tab.id] = {
                     broadcastSocket: broadcastSocket,
-                    tracking: null
+                    tracking: tracking
                 };
+                if (tracking){
+                    track(tab.id);
+                }
                 updateBadge(tab.id);
             });
 
@@ -178,6 +183,7 @@ var TC = {
             // that are active for the tab.
             
             chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
+                console.log('tab ' + tabId + ' updated (' + changeInfo.status + ') to url ' + tab.url);
                 if (changeInfo.status === 'loading'){
                     if (tabs[tabId].tracking){
                         // This tab is tracking an endpoint.
