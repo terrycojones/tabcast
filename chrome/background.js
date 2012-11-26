@@ -217,8 +217,6 @@ var TC = {
                             }
                         }
                     }
-
-                    updateBadge(tabId);
                 }
             });
 
