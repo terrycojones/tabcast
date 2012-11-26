@@ -10,7 +10,8 @@ if len(sys.argv) != 1:
     sys.exit(1)
 
 APP_ID = 'piogflcepibbaddjimpblclaehmnbnbn'
-codebase = 'https://fluiddb.fluidinfo.com/about/tabcast/chrome.crx'
+codebase = (
+    'https://fluiddb.fluidinfo.com/about/tabcast/fluidinfo.com/chrome.crx')
 
 version = loads(sys.stdin.read())['version']
 fdb = Fluid('https://fluiddb.fluidinfo.com')
@@ -34,5 +35,5 @@ data = '''<?xml version='1.0' encoding='UTF-8'?>
 
 fdb.about[about][tag].put(data, 'application/xml')
 
-print ('Uploaded update manifest to '
-       'https://fluiddb.fluidinfo.com/about/%s/%s' % (about, tag))
+print ('Uploaded update manifest for Tabcast version %s to '
+       'https://fluiddb.fluidinfo.com/about/%s/%s' % (version, about, tag))
