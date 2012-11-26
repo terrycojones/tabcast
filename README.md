@@ -1,13 +1,13 @@
-# TabPubSub
+# Tabcast
 
-TabPubSub consists of a browser extension (Chrome only, for now) and a
+Tabcast consists of a browser extension (Chrome only, for now) and a
 server. It allows users to do two things:
 
-* Publish the URLs they visit to a TabPubSub server
-* Track URLs sent to a TabPubSub server
+* Publish the URLs they visit to a Tabcast server
+* Track URLs sent to a Tabcast server
 
 
-# Notes on running your own TabPubSub server
+# Notes on running your own Tabcast server
 
 The server and extension use version 0.9.11 of socket.io. The client-side
 extension Javascript comes from dist/socket.io.min.js in the

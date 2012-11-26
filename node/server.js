@@ -7,7 +7,19 @@ var express = require('express'),
     server = require('http').createServer(app),
     io = require('socket.io').listen(server);
 
-io.set('log level', 1);
+io.configure('production', function(){
+    io.enable('browser client minification');
+    io.enable('browser client etag');
+    io.enable('browser client gzip');
+    io.set('log level', 1);
+    io.set('transports', [
+        'websocket', 'flashsocket', 'htmlfile', 'xhr-polling', 'jsonp-polling'
+    ]);
+});
+
+io.configure('development', function(){
+  io.set('transports', ['websocket']);
+});
 
 app.configure(function() {
     var pub = __dirname + '/public';
@@ -23,7 +35,7 @@ app.configure(function() {
 app.get('/track/:group', function(req, res){
     console.log('Got /track request for group=' + req.params.group);
     db.zrevrange(
-        'urls', 0, 1000, 'withscores', 
+        'urls', 0, 1000, 'withscores',
         function(err, urls){
             if (err){
                 return res.send(500);
@@ -35,7 +47,7 @@ app.get('/track/:group', function(req, res){
 
 app.get('/', function(req, res){
     db.zrevrange(
-        'urls', 0, 1000, 'withscores', 
+        'urls', 0, 1000, 'withscores',
         function(err, urls){
             if (err){
                 return res.send(500);
@@ -45,7 +57,7 @@ app.get('/', function(req, res){
     );
 });
 
-server.listen(9999);
+server.listen(9999, '0.0.0.0');
 
 io.sockets.on('connection', function (socket){
     console.log('connection');
@@ -64,5 +76,5 @@ io.sockets.on('connection', function (socket){
         console.log('client disconnect');
     });
 });
-            
+
 console.log('Server running at http://127.0.0.1:9999/');

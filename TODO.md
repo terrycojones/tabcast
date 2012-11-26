@@ -10,3 +10,4 @@
 - user adding/removal of endpoints
 - client-side auto-updating history view
 - change context menus to allow one-time send to an endpoint
+- when first visiting a track, it should immediately send you to the last URL (if any) for the group

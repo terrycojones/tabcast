@@ -10,14 +10,14 @@ if len(sys.argv) != 1:
     sys.exit(1)
 
 APP_ID = 'piogflcepibbaddjimpblclaehmnbnbn'
-codebase = 'https://fluiddb.fluidinfo.com/about/tabpubsub/chrome.crx'
+codebase = 'https://fluiddb.fluidinfo.com/about/tabcast/chrome.crx'
 
 version = loads(sys.stdin.read())['version']
 fdb = Fluid('https://fluiddb.fluidinfo.com')
 password = os.environ['FLUIDDB_FLUIDINFO_DOT_COM_PASSWORD']
 fdb.login('fluidinfo.com', password)
 
-about = 'tabpubsub'
+about = 'tabcast'
 tag = 'fluidinfo.com/chrome-update.xml'
 
 data = '''<?xml version='1.0' encoding='UTF-8'?>

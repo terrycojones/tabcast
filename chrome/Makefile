@@ -1,4 +1,4 @@
-NAME := tabpubsub-extension
+NAME := tabcast-extension
 
 zip:
 	rm -fr export

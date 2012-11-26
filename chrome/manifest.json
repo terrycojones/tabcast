@@ -1,6 +1,6 @@
 {
-  "name": "TabPubSub",
-  "version": "0.0.101",
+  "name": "Tabcast",
+  "version": "0.0.104",
   "description": "Broadcast the URLs you visit in specific tabs, and automatically track other people or groups.",
   "manifest_version": 2,
   "permissions": [
@@ -25,6 +25,6 @@
   },
   "browser_action": {
     "default_icon": "images/logo-19.png",
-    "default_title": "TabPubSub"
+    "default_title": "Tabcast"
   }
 }

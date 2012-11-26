@@ -29,6 +29,7 @@ var TC = {
         
         var get = function(){
             if (socket === null){
+                console.log('connecting to ' + url);
                 socket = io.connect(url);
                 if (callback){
                     socket.on('url', function(data){
@@ -187,7 +188,6 @@ var TC = {
                             shared.endpoints[tabs[tabId].tracking.nickname]
                                 .trackingSocket.release();
                             tabs[tabId].tracking = null;
-                            updateBadge(tabId);
                         }
                     }
                     else {
@@ -205,7 +205,6 @@ var TC = {
                             }
                             tabs[tabId].tracking = tracking;
                             track(tabId);
-                            updateBadge(tabId);
                         }
                         else {
                             // No tracking involved, broadcast to any
@@ -218,6 +217,8 @@ var TC = {
                             }
                         }
                     }
+
+                    updateBadge(tabId);
                 }
             });
 

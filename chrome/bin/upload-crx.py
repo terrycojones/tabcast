@@ -15,7 +15,7 @@ fdb = Fluid('https://fluiddb.fluidinfo.com')
 password = os.environ['FLUIDDB_FLUIDINFO_DOT_COM_PASSWORD']
 fdb.login('fluidinfo.com', password)
 
-about = 'tabpubsub'
+about = 'tabcast'
 tag = 'fluidinfo.com/chrome.crx'
 
 fdb.about[about][tag].put(data, 'application/x-chrome-extension')
