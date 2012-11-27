@@ -448,7 +448,7 @@ var TC = {
                 });
             }
             else {
-                tabs[tab.id].broadcastSocket[nickname] = false;
+                tabs[tab.id].broadcast[nickname] = false;
                 shared.endpoints[nickname].broadcastSocket.release();
                 updateBadge(tab.id);
             }
