@@ -2,7 +2,7 @@ var TC = {
     init: function(){
         var shared = {},
             endpointManager = this.EndpointManager(shared);
-        
+
         this.TabManager(shared).init();
 
         endpointManager.addEndpoint({
@@ -10,7 +10,7 @@ var TC = {
             nickname: 'httpkit',
             url: 'http://echo.httpkit.com/'
         });
-        
+
         endpointManager.addEndpoint({
             group: 'test',
             nickname: 'jon.es/test',
@@ -24,55 +24,85 @@ var TC = {
 // ------------------------------ SOCKETS ------------------------------
 (function(obj){
     obj.SocketManager = function(url, nickname, callback){
-        var refCount = 0;
-        var socket = null;
-        
+        var refCount = 0,
+            savedSocket = null,  // Socket value saved if we're temporarily disconnected.
+            socket = null;
+
         var get = function(){
+            console.log('in socket get for ' + nickname);
             if (socket === null){
-                console.log('connecting to ' + url);
-                socket = io.connect(url);
-                if (callback){
-                    socket.on('url', function(data){
-                        console.log('received url data', data);
-                        callback(data);
+                var deferred = $.Deferred();
+                console.log('socket was null: connecting to ' + url);
+                try {
+                    socket = io.connect(url, {
+                        'force new connection': true
                     });
                 }
-                socket.on('connect', function (){
-                    console.log('socket connected for ' + nickname);
+                catch (e){
+                    deferred.reject(e);
+                    return deferred.promise();
+                }
+                socket.on('connect', function(){
+                    if (socket){
+                        savedSocket = socket;
+                        console.log('socket connected for ' + nickname, socket);
+                        if (callback){
+                            socket.on('url', function(data){
+                                console.log('received url data', data);
+                                callback(data);
+                            });
+                        }
+                        deferred.resolve(socket);
+                    }
+                    else if (savedSocket){
+                        socket = savedSocket;
+                        console.log('socket reconnected for ' + nickname);
+                    }
+                    else {
+                        console.log('inconceivable socket weirdness occurred.');
+                    }
                 });
-                socket.on('disconnect', function() {
-                    console.log('socket disconnected for ' + nickname);
+                socket.on('error', function(e){
+                    console.log('got socket error for ' + nickname + ':', e);
+                    socket = null;
+                    // Assumption: we only reject the deferred once. If this
+                    // proves false, set deferred = null after rejecting it
+                    // and test it before rejecting.
+                    deferred.reject(e);
                 });
+                socket.on('disconnect', function(){
+                    console.log('socket disconnected for ' + nickname, socket);
+                    socket = null;
+                });
+                return deferred.promise();
             }
-            refCount++;
-            return socket;
+            else {
+                console.log('socket already existed.');
+                return socket;
+            }
         };
-        
-        var disconnect = function(){
-            if (socket){
+
+        var use = function(){
+            refCount++;
+        };
+
+        var release = function(){
+            refCount--;
+            console.log('in socket release, refcount is now ' + refCount);
+            if (refCount === 0){
                 socket.disconnect();
                 socket = null;
-                refCount = 0;
             }
-        };
-        
-        var release = function(){
-            if (refCount <= 0){
+            else if (refCount < 0){
                 console.log('Reference count (' + refCount +
                             ') incorrect in socketManager release method.');
             }
-            else {
-                refCount--;
-                if (refCount === 0){
-                    disconnect();
-                }
-            }
         };
-        
+
         return {
-            disconnect: disconnect,
             get: get,
-            release: release
+            release: release,
+            use: use
         };
     };
 })(TC);
@@ -87,14 +117,14 @@ var TC = {
         var addEndpoint = function(options){
             var nickname = options.nickname,
                 url = options.url;
-            
+
             // Endpoint URLs must end in a slash.
             url += (options.url.charAt(options.url.length - 1) === '/' ?
                     '' : '/');
 
             var contextMenuId = chrome.contextMenus.create({
                 checked: false,
-                title: nickname,
+                title: 'Broadcast to ' + nickname,
                 contexts: ['all'],
                 type: 'checkbox',
                 onclick : function(info, tab){
@@ -103,28 +133,26 @@ var TC = {
             });
 
             endpoints[nickname] = {
-                broadcastingSocket: obj.SocketManager(url, nickname),
+                broadcastSocket: obj.SocketManager(url, nickname),
                 contextMenuId: contextMenuId,
                 group: options.group,
-                trackingSocket: obj.SocketManager(url, nickname, function(data){
+                trackSocket: obj.SocketManager(url, nickname, function(data){
                     shared.urlReceived(nickname, data);
                 }),
                 url: url,
                 username: options.username,
                 password: options.password
             };
-            
+
             shared.endpointAdded(nickname);
         };
 
         var removeEndpoint = function(nickname){
             shared.endpointRemoved(nickname);
             chrome.contextMenus.remove(endpoints[nickname].contextMenuId);
-            endpoints[nickname].broadcastingSocket.disconnect();
-            endpoints[nickname].trackingSocket.disconnect();
             delete endpoints[nickname];
         };
-        
+
         return {
             addEndpoint: addEndpoint,
             removeEndpoint: removeEndpoint
@@ -137,41 +165,47 @@ var TC = {
 (function(obj){
     obj.TabManager = function(shared){
         var tabs = {},
-            broadcastingBadgeBackgroundColor = '#F00',
-            trackingBadgeBackgroundColor = '#0F0',
-            trackingBadgeText = 'auto';
+            broadcastBadgeBackgroundColor = '#F00',
+            trackBadgeBackgroundColor = '#0F0',
+            trackBadgeText = 'auto';
 
         var init = function(){
             chrome.tabs.onCreated.addListener(function(tab){
+                // Note that chrome.tabs.onUpdated is not called for
+                // newly created tabs.
                 console.log('tab ' + tab.id + ' created for url ' + tab.url);
-                var broadcastSocket = {};
+                var broadcast = {};
                 for (var nickname in shared.endpoints){
-                    broadcastSocket[nickname] = null;
+                    broadcast[nickname] = false;
+                };
+                tabs[tab.id] = {
+                    broadcast: broadcast,
+                    tracking: null
                 };
                 var tracking = checkIfTabIsOpeningAnEndpoint(tab);
-                tabs[tab.id] = {
-                    broadcastSocket: broadcastSocket,
-                    tracking: tracking
-                };
                 if (tracking){
-                    track(tab.id);
+                    $.when(
+                        track(tab.id, tracking.nickname, tracking.group)
+                    ).always(function(){
+                        updateBadge(tab.id);
+                    });
                 }
-                updateBadge(tab.id);
             });
 
             // When a tab is removed, it must release any tracking or
             // broadcasting sockets it has in use.
             chrome.tabs.onRemoved.addListener(function(tabId){
+                console.log('tab removed');
                 if (tabs[tabId].tracking){
                     shared.endpoints[tabs[tabId].tracking.nickname]
-                        .trackingSocket.release();
+                        .trackSocket.release();
                 }
                 else {
-                    var broadcastSocket = tabs[tabId].broadcastSocket;
+                    var broadcast = tabs[tabId].broadcast;
                     for (var nickname in shared.endpoints){
-                        if (broadcastSocket[nickname] !== null){
+                        if (broadcast[nickname]){
                             shared.endpoints[nickname]
-                                .broadcastingSocket.release();
+                                .broadcastSocket.release();
                         }
                     };
                 }
@@ -181,46 +215,54 @@ var TC = {
             // When a tab loads a URL, check to see if it's visiting one of
             // our endpoints. If not, broadcast the URL to the endpoints
             // that are active for the tab.
-            
+
             chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
-                console.log('tab ' + tabId + ' updated (' + changeInfo.status + ') to url ' + tab.url);
                 if (changeInfo.status === 'loading'){
+                    console.log('tab ' + tabId + ' updated (' + changeInfo.status + ') to url ' + tab.url);
                     if (tabs[tabId].tracking){
+                        console.log('already tracking');
                         // This tab is tracking an endpoint.
                         if (tab.url !== tabs[tabId].tracking.url){
+                            console.log('heading to non-track induced url');
                             // For some reason (probably user intervention)
                             // the tab is opening a URL that is not the one
                             // it was supposed to open next. Stop tracking.
                             shared.endpoints[tabs[tabId].tracking.nickname]
-                                .trackingSocket.release();
+                                .trackSocket.release();
                             tabs[tabId].tracking = null;
+                            updateBadge(tabId);
                         }
                     }
                     else {
                         var tracking = checkIfTabIsOpeningAnEndpoint(tab);
                         if (tracking){
-                            // When a tab is tracking it can't be broadcasting.
-                            // Set the broadcastSocket of all endpoints for
-                            // this tab to null.
+                            // This tab is about to track an endpoint, so
+                            // it can't be broadcasting.
                             for (var nickname in shared.endpoints){
-                                if (tabs[tabId].broadcastSocket[nickname] !== null){
-                                    shared.endpoints[nickname]
-                                        .broadcastingSocket.release();
-                                    tabs[tabId].broadcastSocket[nickname] = null;
+                                if (tabs[tabId].broadcast[nickname]){
+                                    shared.endpoints[nickname].broadcastSocket
+                                        .release();
+                                    tabs[tabId].broadcast[nickname] = false;
                                 }
                             }
-                            tabs[tabId].tracking = tracking;
-                            track(tabId);
+                            $.when(
+                                track(tabId, tracking.nickname, tracking.group)
+                            ).always(function(){
+                                updateBadge(tabId);
+                            });
                         }
                         else {
                             // No tracking involved, broadcast to any
                             // relevant endpoints.
-                            var broadcastSocket = tabs[tab.id].broadcastSocket;
+                            var deferreds = [];
                             for (nickname in shared.endpoints){
-                                if (broadcastSocket[nickname] !== null){
-                                    broadcast(tab, nickname);
+                                if (tabs[tab.id].broadcast[nickname]){
+                                    deferreds.push(broadcast(tab, nickname));
                                 }
                             }
+                            $.when(deferreds).always(function(){
+                                updateBadge(tabId);
+                            });
                         }
                     }
                 }
@@ -235,18 +277,18 @@ var TC = {
                     // context menu items should be shown as disabled.
                     for (nickname in shared.endpoints){
                         chrome.contextMenus.update(
-                            shared.endpoints[nickname].contextMenuId, { 
+                            shared.endpoints[nickname].contextMenuId, {
                                 checked: false,
                                 enabled: false
                             });
                     }
                 }
                 else {
-                    var broadcastSocket = tabs[activeInfo.tabId].broadcastSocket;
+                    var broadcast = tabs[activeInfo.tabId].broadcast;
                     for (nickname in shared.endpoints){
                         chrome.contextMenus.update(
-                            shared.endpoints[nickname].contextMenuId, { 
-                                checked: broadcastSocket[nickname] !== null,
+                            shared.endpoints[nickname].contextMenuId, {
+                                checked: broadcast[nickname],
                                 enabled: true
                             });
                     }
@@ -254,33 +296,55 @@ var TC = {
                 updateBadge(activeInfo.tabId);
             });
 
-            // Set all existing tabs to have a false broadcast socket value
-            // for all known endpoints, and a null tracking value.
+            // Set all existing tabs to have a false broadcast value for
+            // all known endpoints, and a null tracking value.
             chrome.tabs.query({}, function(existingTabs){
                 for (var i = 0; i < existingTabs.length; i++){
-                    var broadcastSocket = {};
+                    var broadcast = {};
                     for (var nickname in shared.endpoints){
-                        broadcastSocket[nickname] = null;
+                        broadcast[nickname] = false;
                     }
                     tabs[existingTabs[i].id] = {
-                        broadcastSocket: broadcastSocket,
+                        broadcast: broadcast,
                         tracking: null
                     };
                     updateBadge(existingTabs[i].id);
                 }
             });
         };
-        
+
         var broadcast = function(tab, nickname){
             // Send the URL being opened by a tab to the endpoint with nickname.
-            var endpoint = shared.endpoints[nickname];
-            console.log('tab ' + tab.id + ' broadcasts ' + tab.url + ' to ' + nickname);
-            tabs[tab.id].broadcastSocket[nickname].emit('url', {
-                group: endpoint.group,
-                password: endpoint.password,
-                url: tab.url,
-                username: endpoint.username
-            });
+            return $.when(
+                shared.endpoints[nickname].broadcastSocket.get()
+            ).then(
+                function(socket){
+                    console.log('tab ' + tab.id + ' tries to broadcast ' + tab.url + ' to ' + nickname);
+                    var endpoint = shared.endpoints[nickname];
+                    try {
+                        socket.emit('url', {
+                            group: endpoint.group,
+                            password: endpoint.password,
+                            url: tab.url,
+                            username: endpoint.username
+                        });
+                    }
+                    catch (e){
+                        console.log('Error broadcasting to ' + nickname + '. ' +
+                                    e.name + ': ' + e.message);
+                        return;
+                    }
+                    console.log('broadcast of ' + tab.url + ' to ' + nickname +
+                                ' done.');
+                },
+                function(error){
+                    console.log('tab ' + tab.id + ' broadcast ' + tab.url +
+                                ' to ' + nickname + ' failed.');
+                    if (error){
+                        console.log(error.name + ': ' + error.message);
+                    }
+                }
+            );
         };
 
         var checkIfTabIsOpeningAnEndpoint = function(tab){
@@ -299,82 +363,110 @@ var TC = {
             return null;
         };
 
-        var track = function(tabId){
+        var track = function(tabId, nickname, group){
             // Set the passed tab up to track a group on an endpoint.
-            var tab = tabs[tabId],
-                nickname = tab.tracking.nickname,
-                group = tab.tracking.group,
-                socket = shared.endpoints[nickname].trackingSocket.get();
-            console.log('Tab visits endpoint ' + nickname);
-            socket.emit('track', group);
-            tab.tracking.socket = socket;
-            tab.tracking.url = shared.endpoints[nickname].url + 'track/' + group;
+            var tab = tabs[tabId];
+            console.log('Tab visits tracking endpoint ' + nickname);
+            return $.when(
+                shared.endpoints[nickname].trackSocket.get()
+            ).then(
+                function(socket){
+                    try {
+                        socket.emit('track', group);
+                    }
+                    catch (e){
+                        console.log('Could not send track command to ' +
+                                    nickname + ' server.' + '. ' +
+                                    e.name + ': ' + e.message);
+                        return;
+                    }
+                    shared.endpoints[nickname].trackSocket.use();
+                    tab.tracking = {
+                        group: group,
+                        nickname: nickname,
+                        url: shared.endpoints[nickname].url + 'track/' + group
+                    };
+                    console.log('Now tracking endpoint ' + nickname);
+                },
+                function(error){
+                    console.log('Could not get socket to track endpoint ' +
+                                nickname + '. ');
+                    if (error){
+                        console.log(error.name + ': ' + error.message);
+                    }
+                }
+            );
         };
-        
+
         var updateBadge = function(tabId){
             if (tabs[tabId].tracking){
                 chrome.browserAction.setBadgeBackgroundColor({
-                    color: trackingBadgeBackgroundColor
+                    color: trackBadgeBackgroundColor
                 });
                 chrome.browserAction.setBadgeText({
                     tabId: tabId,
-                    text: trackingBadgeText
+                    text: trackBadgeText
                 });
             }
             else {
-                var broadcastingCount = 0,
-                    broadcastSocket = tabs[tabId].broadcastSocket;
+                var broadcastCount = 0,
+                    broadcast = tabs[tabId].broadcast;
                 for (var nickname in shared.endpoints){
-                    if (broadcastSocket[nickname] !== null){
-                        broadcastingCount++;
+                    if (broadcast[nickname]){
+                        broadcastCount++;
                     }
                 }
                 chrome.browserAction.setBadgeBackgroundColor({
-                    color: broadcastingBadgeBackgroundColor
+                    color: broadcastBadgeBackgroundColor
                 });
                 chrome.browserAction.setBadgeText({
                     tabId: tabId,
-                    text: broadcastingCount ? '' + broadcastingCount : ''
+                    text: broadcastCount ? '' + broadcastCount : ''
                 });
             }
         };
-        
+
         shared.contextMenuClick = function(nickname, info, tab){
             if (info.checked){
-                tabs[tab.id].broadcastSocket[nickname] = 
-                    shared.endpoints[nickname].broadcastingSocket.get();
-                broadcast(tab, nickname);
+                tabs[tab.id].broadcast[nickname] = true;
+                shared.endpoints[nickname].broadcastSocket.use();
+                // Send the current URL off immediately.
+                $.when(
+                    broadcast(tab, nickname)
+                ).always(function(){
+                    updateBadge(tab.id);
+                });
             }
             else {
-                shared.endpoints[nickname].broadcastingSocket.release();
-                tabs[tab.id].broadcastSocket[nickname] = null;
+                tabs[tab.id].broadcastSocket[nickname] = false;
+                shared.endpoints[nickname].broadcastSocket.release();
+                updateBadge(tab.id);
             }
-            updateBadge(tab.id);
         };
-        
+
         shared.endpointAdded = function(nickname){
             for (var tabId in tabs){
-                tabs[tabId].broadcastSocket[nickname] = false;
+                tabs[tabId].broadcast[nickname] = false;
             };
         };
-        
+
         shared.endpointRemoved = function(nickname){
             for (var tabId in tabs){
                 var tab = tabs[tabId];
                 if (tab.tracking){
                     if (tab.tracking.nickname === nickname){
-                        shared.endpoints[nickname].trackingSocket.release();
+                        shared.endpoints[nickname].trackSocket.release();
                         tab.tracking = null;
                     }
                 }
-                else if (tab.broadcastSocket[nickname] !== null){
-                    shared.endpoints[nickname].broadcastingSocket.release();
+                else if (tab.broadcast[nickname]){
+                    shared.endpoints[nickname].broadcastSocket.release();
                 }
-                delete tab.broadcastSocket[nickname];
+                delete tab.broadcast[nickname];
                 updateBadge(tabId);
             }
         };
-        
+
         shared.urlReceived = function(nickname, data){
             console.log('URL received ' + nickname, data);
             for (var tabId in tabs){
@@ -396,7 +488,7 @@ var TC = {
                 }
             }
         };
-        
+
         return {
             init: init
         };
