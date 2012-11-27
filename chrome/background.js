@@ -230,8 +230,8 @@ var TC = {
                             shared.endpoints[tabs[tabId].tracking.nickname]
                                 .trackSocket.release();
                             tabs[tabId].tracking = null;
-                            updateBadge(tabId);
                         }
+                        updateBadge(tabId);
                     }
                     else {
                         var tracking = checkIfTabIsOpeningAnEndpoint(tab);
