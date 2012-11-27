@@ -180,7 +180,8 @@ var TC = {
                 };
                 tabs[tab.id] = {
                     broadcast: broadcast,
-                    tracking: null
+                    tracking: null,
+                    url: tab.url
                 };
                 var tracking = checkIfTabIsOpeningAnEndpoint(tab);
                 if (tracking){
@@ -196,13 +197,15 @@ var TC = {
             // broadcasting sockets it has in use.
             chrome.tabs.onRemoved.addListener(function(tabId){
                 console.log('tab removed');
+                var nickname;
                 if (tabs[tabId].tracking){
-                    shared.endpoints[tabs[tabId].tracking.nickname]
-                        .trackSocket.release();
+                    nickname = tabs[tabId].tracking.nickname;
+                    shared.endpoints[nickname].trackSocket.release();
+                    shared.endpoints[nickname].broadcastSocket.release();
                 }
                 else {
                     var broadcast = tabs[tabId].broadcast;
-                    for (var nickname in shared.endpoints){
+                    for (nickname in shared.endpoints){
                         if (broadcast[nickname]){
                             shared.endpoints[nickname]
                                 .broadcastSocket.release();
@@ -218,18 +221,14 @@ var TC = {
 
             chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
                 if (changeInfo.status === 'loading'){
+                    tabs[tabId].url = tab.url;
                     console.log('tab ' + tabId + ' updated (' + changeInfo.status + ') to url ' + tab.url);
                     if (tabs[tabId].tracking){
                         console.log('already tracking');
                         // This tab is tracking an endpoint.
                         if (tab.url !== tabs[tabId].tracking.url){
-                            console.log('heading to non-track induced url');
-                            // For some reason (probably user intervention)
-                            // the tab is opening a URL that is not the one
-                            // it was supposed to open next. Stop tracking.
-                            shared.endpoints[tabs[tabId].tracking.nickname]
-                                .trackSocket.release();
-                            tabs[tabId].tracking = null;
+                            console.log('local user goes to new URL in tracking tab');
+                            broadcast(tab, tabs[tabId].tracking.nickname);
                         }
                         updateBadge(tabId);
                     }
@@ -237,9 +236,11 @@ var TC = {
                         var tracking = checkIfTabIsOpeningAnEndpoint(tab);
                         if (tracking){
                             // This tab is about to track an endpoint, so
-                            // it can't be broadcasting.
+                            // we must disable any broadcasting it is doing (other
+                            // than to the endpoint we're about to track).
                             for (var nickname in shared.endpoints){
-                                if (tabs[tabId].broadcast[nickname]){
+                                if (tabs[tabId].broadcast[nickname] &&
+                                    nickname !== tracking.nickname){
                                     shared.endpoints[nickname].broadcastSocket
                                         .release();
                                     tabs[tabId].broadcast[nickname] = false;
@@ -306,7 +307,8 @@ var TC = {
                     }
                     tabs[existingTabs[i].id] = {
                         broadcast: broadcast,
-                        tracking: null
+                        tracking: null,
+                        url: existingTabs[i].url
                     };
                     updateBadge(existingTabs[i].id);
                 }
@@ -386,6 +388,12 @@ var TC = {
                         nickname: nickname,
                         url: shared.endpoints[nickname].url + 'track/' + group
                     };
+                    // Set the tab up to broadcast to the endpoint it is now
+                    // tracking (if it's not doing that already).
+                    if (!tabs[tabId].broadcast[nickname]){
+                        tabs[tabId].broadcast[nickname] = true;
+                        shared.endpoints[nickname].trackSocket.use();
+                    }
                     console.log('Now tracking endpoint ' + nickname);
                 },
                 function(error){
@@ -432,7 +440,7 @@ var TC = {
             if (info.checked){
                 tabs[tab.id].broadcast[nickname] = true;
                 shared.endpoints[nickname].broadcastSocket.use();
-                // Send the current URL off immediately.
+                // Broadcast the current URL off immediately.
                 $.when(
                     broadcast(tab, nickname)
                 ).always(function(){
@@ -458,6 +466,7 @@ var TC = {
                 if (tab.tracking){
                     if (tab.tracking.nickname === nickname){
                         shared.endpoints[nickname].trackSocket.release();
+                        shared.endpoints[nickname].broadcastSocket.release();
                         tab.tracking = null;
                     }
                 }
@@ -472,16 +481,26 @@ var TC = {
         shared.urlReceived = function(nickname, data){
             console.log('URL received ' + nickname, data);
             for (var tabId in tabs){
-                var tab = tabs[tabId],
-                    tracking = tab.tracking;
-                if (tracking &&
-                    tracking.nickname === nickname &&
+                var tracking = tabs[tabId].tracking;
+                console.log('Tracking is', tracking);
+                if (tracking && tracking.nickname === nickname &&
                     tracking.group === data.group){
-                    console.log('Tracking tab received data for nickname ' + nickname, data, tabId);
-                    tracking.url = data.url;
-                    chrome.tabs.update(parseInt(tabId, 10), {
-                        url: data.url
-                    });
+                    console.log('Tracking tab received data for nickname ' +
+                                nickname, data, tabId);
+                    // Only update a tracking tab if it's not already at the
+                    // desired URL.   This is not perfect - what if someone
+                    // else is driving the session and they deliberately do
+                    // a reload?  Would be better to base this on username,
+                    // if we have one and tabid.
+                    if (tabs[tabId].url !== data.url){
+                        tracking.url = data.url;
+                        chrome.tabs.update(parseInt(tabId, 10), {
+                            url: data.url
+                        });
+                    }
+                    else {
+                        console.log('tracking tag is already looking at ' + data.url);
+                    };
                 }
                 else {
                     if (tracking){
