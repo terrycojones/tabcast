@@ -19,7 +19,7 @@ io.configure('production', function(){
 
 io.configure('development', function(){
     io.set('transports', ['websocket']);
-    io.set('log level', 1);
+    // io.set('log level', 1);
 });
 
 app.configure(function() {
@@ -67,14 +67,15 @@ io.sockets.on('connection', function (socket){
     socket.on('track', function(group){
         console.log('Tracking ' + group);
         socket.join(group);
-        console.log('last url for group ' + group + ' is ' + lastUrlForGroup[group]);
+        // Send just this socket the last URL (if any) for the group.
         if (lastUrlForGroup[group]){
-            socket.emit({
+            socket.emit('url', {
                 group: group,
                 url: lastUrlForGroup[group]
             });
         }
     });
+
     socket.on('url', function(data){
         console.log('Received url ' + data.url + ' for group ' + data.group);
         lastUrlForGroup[data.group] = data.url;
