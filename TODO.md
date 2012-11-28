@@ -4,7 +4,6 @@
 
 - user adding/removal of endpoints
 - client-side auto-updating history view
-- change context menus to allow one-time send to an endpoint
 - server settings to allow auth
 - server to log URL + date
 

@@ -3,6 +3,7 @@ var TC = {
         var shared = {},
             endpointManager = this.EndpointManager(shared);
 
+        endpointManager.init();
         this.TabManager(shared).init();
 
         endpointManager.addEndpoint({
@@ -47,10 +48,8 @@ var TC = {
                 socket.on('connect', function(){
                     if (socket){
                         savedSocket = socket;
-                        console.log('socket connected for ' + nickname, socket);
                         if (callback){
                             socket.on('url', function(data){
-                                console.log('received url data', data);
                                 callback(data);
                             });
                         }
@@ -58,7 +57,6 @@ var TC = {
                     }
                     else if (savedSocket){
                         socket = savedSocket;
-                        console.log('socket reconnected for ' + nickname);
                     }
                     else {
                         console.log('inconceivable socket weirdness occurred.');
@@ -73,7 +71,7 @@ var TC = {
                     deferred.reject(e);
                 });
                 socket.on('disconnect', function(){
-                    console.log('socket disconnected for ' + nickname, socket);
+                    console.log('socket disconnected for ' + nickname);
                     socket = null;
                 });
                 return deferred.promise();
@@ -90,10 +88,13 @@ var TC = {
 
         var release = function(){
             refCount--;
-            console.log('in socket release, refcount is now ' + refCount);
             if (refCount === 0){
-                socket.disconnect();
-                socket = null;
+                if (socket){
+                    // socket may still be 'null' even though .use has been called.
+                    // .use only indicates an intention to use the socket.
+                    socket.disconnect();
+                    socket = null;
+                }
             }
             else if (refCount < 0){
                 console.log('Reference count (' + refCount +
@@ -113,8 +114,29 @@ var TC = {
 // ------------------------------ ENDPOINTS ------------------------------
 (function(obj){
     obj.EndpointManager = function(shared){
-        var endpoints = {};
-        shared.endpoints = endpoints;
+        var endpoints = {},
+            broadcastMenuItem,
+            sendMenuItem,
+            trackMenuItem;
+
+        var init = function(){
+            shared.endpoints = endpoints;
+
+            broadcastMenuItem = chrome.contextMenus.create({
+                title: 'Broadcast all URLs to',
+                contexts: ['all']
+            });
+
+            sendMenuItem = chrome.contextMenus.create({
+                title: 'Send current URL to',
+                contexts: ['all']
+            });
+
+            trackMenuItem = chrome.contextMenus.create({
+                title: 'Track group',
+                contexts: ['all']
+            });
+        };
 
         var addEndpoint = function(options){
             var nickname = options.nickname,
@@ -124,20 +146,43 @@ var TC = {
             url += (options.url.charAt(options.url.length - 1) === '/' ?
                     '' : '/');
 
-            var contextMenuId = chrome.contextMenus.create({
+            var broadcastContextMenuId = chrome.contextMenus.create({
                 checked: false,
-                title: 'Broadcast to ' + nickname,
                 contexts: ['all'],
+                parentId: broadcastMenuItem,
+                title: nickname,
                 type: 'checkbox',
                 onclick : function(info, tab){
-                    shared.contextMenuClick(nickname, info, tab);
+                    shared.broadcastMenuClick(nickname, info, tab);
+                }
+            });
+
+            var sendContextMenuId = chrome.contextMenus.create({
+                contexts: ['all'],
+                parentId: sendMenuItem,
+                title: nickname,
+                onclick : function(info, tab){
+                    shared.sendMenuClick(nickname, tab);
+                }
+            });
+
+            var trackContextMenuId = chrome.contextMenus.create({
+                checked: false,
+                contexts: ['all'],
+                parentId: trackMenuItem,
+                title: nickname,
+                type: 'checkbox',
+                onclick : function(info, tab){
+                    shared.trackMenuClick(nickname, info, tab);
                 }
             });
 
             endpoints[nickname] = {
                 broadcastSocket: obj.SocketManager(url, nickname),
-                contextMenuId: contextMenuId,
+                broadcastContextMenuId: broadcastContextMenuId,
                 group: options.group,
+                sendContextMenuId: sendContextMenuId,
+                trackContextMenuId: trackContextMenuId,
                 trackSocket: obj.SocketManager(url, nickname, function(data){
                     shared.urlReceived(nickname, data);
                 }),
@@ -151,12 +196,15 @@ var TC = {
 
         var removeEndpoint = function(nickname){
             shared.endpointRemoved(nickname);
-            chrome.contextMenus.remove(endpoints[nickname].contextMenuId);
+            chrome.contextMenus.remove(endpoints[nickname].broadcastContextMenuId);
+            chrome.contextMenus.remove(endpoints[nickname].sendContextMenuId);
+            chrome.contextMenus.remove(endpoints[nickname].trackContextMenuId);
             delete endpoints[nickname];
         };
 
         return {
             addEndpoint: addEndpoint,
+            init: init,
             removeEndpoint: removeEndpoint
         };
     };
@@ -167,11 +215,14 @@ var TC = {
 (function(obj){
     obj.TabManager = function(shared){
         var tabs = {},
-            broadcastBadgeBackgroundColor = '#F00',
-            trackBadgeBackgroundColor = '#0F0',
+            badgeBackgroundColor = '#0F0',
             trackBadgeText = 'auto';
 
         var init = function(){
+            chrome.browserAction.setBadgeBackgroundColor({
+                color: badgeBackgroundColor
+            });
+
             chrome.tabs.onCreated.addListener(function(tab){
                 // Note that chrome.tabs.onUpdated is not called for
                 // newly created tabs.
@@ -226,7 +277,6 @@ var TC = {
                     tabs[tabId].url = tab.url;
                     console.log('tab ' + tabId + ' updated (' + changeInfo.status + ') to url ' + tab.url);
                     if (tabs[tabId].tracking){
-                        console.log('already tracking');
                         // This tab is tracking an endpoint.
                         if (tab.url !== tabs[tabId].tracking.url){
                             console.log('local user goes to new URL in tracking tab');
@@ -278,11 +328,23 @@ var TC = {
                 if (tabs[activeInfo.tabId].tracking){
                     // An endpoint is being tracked, so all broadcast
                     // context menu items should be shown as disabled.
+                    var tracking = tabs[activeInfo.tabId].tracking;
+                    console.log('Updating context menu for tracking tab.');
                     for (nickname in shared.endpoints){
                         chrome.contextMenus.update(
-                            shared.endpoints[nickname].contextMenuId, {
-                                checked: false,
-                                enabled: false
+                            shared.endpoints[nickname].trackContextMenuId, {
+                                checked: nickname === tracking.nickname,
+                                enabled: true,
+                                type: 'checkbox' // Needed for apparent Chrome bug.
+                            });
+                        // Don't let the user turn off broadcasting if they're
+                        // tracking.  Maybe we can make this more flexible
+                        // later.
+                        chrome.contextMenus.update(
+                            shared.endpoints[nickname].broadcastContextMenuId, {
+                                checked: nickname === tracking.nickname,
+                                enabled: false,
+                                type: 'checkbox' // Needed for apparent Chrome bug.
                             });
                     }
                 }
@@ -290,9 +352,16 @@ var TC = {
                     var broadcast = tabs[activeInfo.tabId].broadcast;
                     for (nickname in shared.endpoints){
                         chrome.contextMenus.update(
-                            shared.endpoints[nickname].contextMenuId, {
+                            shared.endpoints[nickname].trackContextMenuId, {
+                                checked: false,
+                                enabled: true,
+                                type: 'checkbox' // Needed for apparent Chrome bug.
+                            });
+                        chrome.contextMenus.update(
+                            shared.endpoints[nickname].broadcastContextMenuId, {
                                 checked: broadcast[nickname],
-                                enabled: true
+                                enabled: true,
+                                type: 'checkbox' // Needed for apparent Chrome bug.
                             });
                     }
                 }
@@ -409,17 +478,16 @@ var TC = {
         };
 
         var updateBadge = function(tabId){
+            // console.log('in updateBadge tabId=' + tabId, tabs[tabId]);
             if (tabs[tabId].tracking){
-                chrome.browserAction.setBadgeBackgroundColor({
-                    color: trackBadgeBackgroundColor,
-                    tabId: tabId
-                });
+                // console.log('in updateBadge, we are tracking');
                 chrome.browserAction.setBadgeText({
                     tabId: tabId,
                     text: trackBadgeText
                 });
             }
             else {
+                // console.log('in updateBadge, we are NOT tracking');
                 var broadcastCount = 0,
                     broadcast = tabs[tabId].broadcast;
                 for (var nickname in shared.endpoints){
@@ -427,10 +495,6 @@ var TC = {
                         broadcastCount++;
                     }
                 }
-                chrome.browserAction.setBadgeBackgroundColor({
-                    color: broadcastBadgeBackgroundColor,
-                    tabId: tabId
-                });
                 chrome.browserAction.setBadgeText({
                     tabId: tabId,
                     text: broadcastCount ? '' + broadcastCount : ''
@@ -438,7 +502,7 @@ var TC = {
             }
         };
 
-        shared.contextMenuClick = function(nickname, info, tab){
+        shared.broadcastMenuClick = function(nickname, info, tab){
             if (info.checked){
                 tabs[tab.id].broadcast[nickname] = true;
                 shared.endpoints[nickname].broadcastSocket.use();
@@ -452,6 +516,57 @@ var TC = {
             else {
                 tabs[tab.id].broadcast[nickname] = false;
                 shared.endpoints[nickname].broadcastSocket.release();
+                updateBadge(tab.id);
+            }
+        };
+
+        shared.sendMenuClick = function(nickname, tab){
+            // Context menu click in a tab. Send its URL to the group on
+            // the endpoint nickname.
+            $.when(
+                shared.endpoints[nickname].broadcastSocket.get()
+            ).then(
+                function(socket){
+                    try {
+                        var endpoint = shared.endpoints[nickname];
+                        socket.emit('url', {
+                            group: endpoint.group,
+                            password: endpoint.password,
+                            url: tab.url,
+                            username: endpoint.username
+                        });
+                    }
+                    catch (e){
+                        console.log('Could not send track command to ' +
+                                    nickname + ' server.' + '. ' +
+                                    e.name + ': ' + e.message);
+                        return;
+                    }
+                },
+                function(error){
+                    console.log('Could not send URL to endpoint ' +
+                                nickname + '. ');
+                    if (error){
+                        console.log(error.name + ': ' + error.message);
+                    }
+                }
+            );
+        },
+
+        shared.trackMenuClick = function(nickname, info, tab){
+            var endpoint = shared.endpoints[nickname];
+            if (info.checked){
+                // Start tracking the endpoint.
+                chrome.tabs.update(tab.id, {
+                    url: endpoint.url + 'track/' + endpoint.group
+                });
+            }
+            else {
+                // Stop tracking the endpoint.
+                endpoint.trackSocket.release();
+                tabs[tab.id].tracking = null;
+                endpoint.broadcastSocket.release();
+                tabs[tab.id].broadcast[nickname] = false;
                 updateBadge(tab.id);
             }
         };
@@ -481,14 +596,13 @@ var TC = {
         };
 
         shared.urlReceived = function(nickname, data){
-            console.log('URL received ' + nickname, data);
+            console.log('URL received for ' + nickname + '. url=' +
+                        data.url + ' group=' + data.group);
             for (var tabId in tabs){
                 var tracking = tabs[tabId].tracking;
-                console.log('Tracking is', tracking);
                 if (tracking && tracking.nickname === nickname &&
                     tracking.group === data.group){
-                    console.log('Tracking tab received data for nickname ' +
-                                nickname, data, tabId);
+                    console.log('Tracking tab nickname & group match incoming URL.');
                     // Only update a tracking tab if it's not already at the
                     // desired URL.   This is not perfect - what if someone
                     // else is driving the session and they deliberately do
@@ -496,17 +610,25 @@ var TC = {
                     // if we have one and tabid.
                     if (tabs[tabId].url !== data.url){
                         tracking.url = data.url;
-                        chrome.tabs.update(parseInt(tabId, 10), {
-                            url: data.url
-                        });
+                        console.log('updating tab ' + tabId + ' + to url ' + data.url);
+                        chrome.tabs.update(
+                            parseInt(tabId, 10),
+                            {
+                                url: data.url
+                            },
+                            function(tab){
+                                console.log('setting badge on tab ' + tab.id);
+                                updateBadge(tab.id);
+                            }
+                        );
                     }
                     else {
-                        console.log('tracking tag is already looking at ' + data.url);
+                        console.log('tracking tag already open on url ' + data.url);
                     };
                 }
                 else {
                     if (tracking){
-                        console.log('tab received non-matching data for nickname ' + nickname, data, tracking);
+                        console.log('Tracking tab nickname/group do not match incoming url');
                     }
                 }
             }
