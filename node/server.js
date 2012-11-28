@@ -18,7 +18,8 @@ io.configure('production', function(){
 });
 
 io.configure('development', function(){
-  io.set('transports', ['websocket']);
+    io.set('transports', ['websocket']);
+    io.set('log level', 1);
 });
 
 app.configure(function() {
@@ -59,14 +60,24 @@ app.get('/', function(req, res){
 
 server.listen(9999, '0.0.0.0');
 
+var lastUrlForGroup = {};
+
 io.sockets.on('connection', function (socket){
     console.log('connection');
     socket.on('track', function(group){
         console.log('Tracking ' + group);
         socket.join(group);
+        console.log('last url for group ' + group + ' is ' + lastUrlForGroup[group]);
+        if (lastUrlForGroup[group]){
+            socket.emit({
+                group: group,
+                url: lastUrlForGroup[group]
+            });
+        }
     });
     socket.on('url', function(data){
         console.log('Received url ' + data.url + ' for group ' + data.group);
+        lastUrlForGroup[data.group] = data.url;
         var date = Date.now();
         db.zadd('urls', date, data.url);
         delete data['password'];

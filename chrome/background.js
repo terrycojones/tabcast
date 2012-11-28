@@ -6,9 +6,11 @@ var TC = {
         this.TabManager(shared).init();
 
         endpointManager.addEndpoint({
-            group: 'public',
-            nickname: 'httpkit',
-            url: 'http://echo.httpkit.com/'
+            group: 'test',
+            nickname: 'localhost/test',
+            password: 'password',
+            url: 'http://localhost:9999',
+            username: 'username'
         });
 
         endpointManager.addEndpoint({
@@ -392,7 +394,7 @@ var TC = {
                     // tracking (if it's not doing that already).
                     if (!tabs[tabId].broadcast[nickname]){
                         tabs[tabId].broadcast[nickname] = true;
-                        shared.endpoints[nickname].trackSocket.use();
+                        shared.endpoints[nickname].broadcastSocket.use();
                     }
                     console.log('Now tracking endpoint ' + nickname);
                 },
@@ -440,7 +442,7 @@ var TC = {
             if (info.checked){
                 tabs[tab.id].broadcast[nickname] = true;
                 shared.endpoints[nickname].broadcastSocket.use();
-                // Broadcast the current URL off immediately.
+                // Broadcast the current URL immediately.
                 $.when(
                     broadcast(tab, nickname)
                 ).always(function(){
