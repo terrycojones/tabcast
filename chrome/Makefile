@@ -17,7 +17,6 @@ crx: zip
 
 dist: crx
 	./bin/upload-crx.py export/$(NAME).crx
-	./bin/upload-zip.py export/$(NAME).zip
 	./bin/upload-update-manifest.py < export/$(NAME)/manifest.json
 
 clean:
