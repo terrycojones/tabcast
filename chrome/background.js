@@ -57,6 +57,9 @@ var TC = {
                     console.log('socket disconnected for ' + nickname);
                     socket = null;
                 });
+                socket.on('authentication failed', function(data){
+                    console.log('socket authentication failure', data);
+                });
                 return deferred.promise();
             }
             else {

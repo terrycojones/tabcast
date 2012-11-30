@@ -103,9 +103,9 @@ var OPTIONS = {
             {
                 tabcastSettings: {
                     endpoints: {
-                        'localhost/default': {
-                            group: 'default',
-                            nickname: 'localhost/default',
+                        'localhost-test': {
+                            group: 'test',
+                            nickname: 'localhost-test',
                             url: 'http://localhost:9999'
                         }
                     }
