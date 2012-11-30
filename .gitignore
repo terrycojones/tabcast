@@ -1,6 +1,6 @@
 *~
 *.pyc
-chrome/private-key.pem
+chrome/PRIVATE-KEY
 chrome/export
 npm-debug.log
 node/node_modules

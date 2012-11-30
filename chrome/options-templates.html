@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <!-- Template for options display of endpoints. -->
+
+    <script id="no-endpoints-intro" type="text/html">
+      <p>You don't have any Tabcast groups configured. Add one below.</p>
+    </script>
+
+    <script id="endpoints-intro" type="text/html">
+      <p>You have {{count}} Tabcast {{groups}}.</p>
+    </script>
+
+    <script id="existing-endpoints" type="text/html">
+      <h3>Your groups</h3>
+      <div id="intro"></div>
+      <div class="tabbable" id="tabs-div">
+        <ul class="nav nav-tabs" id="tabs">
+          {{#endpoints}}
+          <li><a href="#a_{{index}}" data-toggle="tab">{{nickname}}</a></li>
+          {{/endpoints}}
+          <li><a href="#addNew" data-toggle="tab"><img src="images/add-nickname.png" id="add-nickname-icon"/></a></li>
+        </ul>
+
+        <div class="tab-content">
+          {{#endpoints}}
+          <div class="tab-pane" id="a_{{index}}">
+            <form class="form-horizontal">
+
+              <div class="control-group">
+                <label class="control-label" for="nickname">Nickname</label>
+                <div class="controls">
+                  <input type="text" class="input-xlarge" name="nickname" value="{{nickname}}" disabled/>
+                </div>
+              </div>
+
+              <div class="control-group">
+                <label class="control-label" for="url">Server URL</label>
+                <div class="controls">
+                  <input type="text" class="input-xlarge" name="url" value="{{url}}"/>
+                </div>
+              </div>
+
+              <div class="control-group">
+                <label class="control-label" for="group">Group name</label>
+                <div class="controls">
+                  <input type="text" class="input-xlarge" name="group" value="{{group}}"/>
+                </div>
+              </div>
+
+              {{#username}}
+              <div class="control-group">
+                <label class="control-label" for="username">User name</label>
+                <div class="controls">
+                  <input type="text" class="input-xlarge" name="username" value="{{username}}"/>
+                </div>
+              </div>
+              {{/username}}
+
+              {{#password}}
+              <div class="control-group">
+                <label class="control-label" for="password">Password</label>
+                <div class="controls">
+                  <input type="text" class="input-xlarge" name="password" value="{{password}}"/>
+                </div>
+              </div>
+              {{/password}}
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="endpointClone_{{index}}">Clone</button>
+                <button type="submit" class="btn btn-danger" id="endpointDelete_{{index}}">Delete</button>
+              </div>
+            </form>
+          </div>
+          {{/endpoints}}
+
+          <!-- New nickname -->
+
+          <div class="tab-pane" id="addNew">
+            <form class="form-horizontal" novalidate>
+              <div class="control-group">
+                <label class="control-label" for="nickname">Nickname</label>
+                <div class="controls">
+                  <input type="text" class="input-xlarge" name="nickname"
+                         id="nickname" placeholder="A nickname for this server and group"
+                         data-validation-callback-callback="OPTIONS.validateNicknameFromForm"
+                         autofocus required/>
+                </div>
+              </div>
+              <div class="control-group">
+                <label class="control-label" for="url">Server URL</label>
+                <div class="controls">
+                  <!-- Be permissive with the regex that matches server URLs. -->
+                  <input type="text" name="url" id="url" value="http://"
+                         class="input-xlarge"
+                         data-validation-regex-regex="[a-z_0-9]+:\/\/[^\s]+$" 
+                         data-validation-regex-message="Server URLs should look like http://host.name.com:port (the :port is optional)"
+                         required/>
+                </div>
+              </div>
+              <div class="control-group">
+                <label class="control-label" for="group">Group name</label>
+                <div class="controls">
+                  <input type="text" class="input-xlarge"
+                         name="group" id="group" required/>
+                </div>
+              </div>
+              <div class="control-group">
+                <label class="control-label" for="username">User name</label>
+                <div class="controls">
+                  <input type="text" class="input-xlarge"
+                         id="username" name="username"/>
+                </div>
+              </div>
+              <div class="control-group">
+                <label class="control-label" for="password">Password</label>
+                <div class="controls">
+                  <input type="password" class="input-xlarge" name="password"
+                         id="password"/>
+                </div>
+              </div>
+              <div class="control-group">
+                <label class="control-label" for="passwordConfirm">Confirm password</label>
+                <div class="controls">
+                  <input type="password" name="passwordConfirm"
+                         class="input-xlarge"
+                         data-validation-match-match="password"
+                         data-validation-match-message="Passwords do not match"/>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="save">Create
+                  <i class="icon-ok icon-white"></i></button><br />
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </script>
+  </body>
+</html>

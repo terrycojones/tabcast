@@ -1,26 +1,9 @@
 var TC = {
     init: function(){
-        var shared = {},
-            endpointManager = this.EndpointManager(shared);
-
-        endpointManager.init();
+        var shared = {};
+        this.endpointManager = this.EndpointManager(shared);
+        this.endpointManager.init();
         this.TabManager(shared).init();
-
-        endpointManager.addEndpoint({
-            group: 'test',
-            nickname: 'localhost/test',
-            password: 'password',
-            url: 'http://localhost:9999',
-            username: 'username'
-        });
-
-        endpointManager.addEndpoint({
-            group: 'test',
-            nickname: 'jon.es/test',
-            password: 'password',
-            url: 'http://jon.es:9999',
-            username: 'username'
-        });
     }
 };
 
@@ -195,7 +178,9 @@ var TC = {
         };
 
         var removeEndpoint = function(nickname){
+            console.log('Removing endpoint ' + nickname);
             shared.endpointRemoved(nickname);
+            console.log('Removing context menu items');
             chrome.contextMenus.remove(endpoints[nickname].broadcastContextMenuId);
             chrome.contextMenus.remove(endpoints[nickname].sendContextMenuId);
             chrome.contextMenus.remove(endpoints[nickname].trackContextMenuId);
@@ -591,7 +576,6 @@ var TC = {
                     shared.endpoints[nickname].broadcastSocket.release();
                 }
                 delete tab.broadcast[nickname];
-                updateBadge(tabId);
             }
         };
 

@@ -1,0 +1,14 @@
+#tabs-div {
+    padding: 10px 10px 0px 10px;
+    border: 1px solid #CCC;
+}
+
+#add-nickname-icon {
+    height: 20px;
+    width: 20px;
+}
+
+#definitions {
+    padding-left: 5%;
+    padding-right: 20%;
+}
