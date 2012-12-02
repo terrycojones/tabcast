@@ -103,10 +103,15 @@ var TC = {
         var endpoints = {},
             broadcastMenuItem,
             sendMenuItem,
+            storageFormat = 1,
             trackMenuItem;
 
         var init = function(){
             shared.endpoints = endpoints;
+            // Reset the saved endpoints if you completely mess up the locally
+            // stored endpoints or change their format, etc.
+            // clearSavedEndpoints();
+            restoreSavedEndpoints();
 
             broadcastMenuItem = chrome.contextMenus.create({
                 title: 'Broadcast all URLs to',
@@ -124,7 +129,7 @@ var TC = {
             });
         };
 
-        var addEndpoint = function(options){
+        var addEndpoint = function(options, save){
             var nickname = options.nickname,
                 url = options.url;
 
@@ -177,6 +182,10 @@ var TC = {
                 password: options.password
             };
 
+            if (save){
+                saveEndpoints();
+            }
+
             shared.endpointAdded(nickname);
         };
 
@@ -190,8 +199,101 @@ var TC = {
             delete endpoints[nickname];
         };
 
+        var endpointsForOptions = function(){
+            // Return endpoints for options.js.
+            var result = {};
+            for (var nickname in endpoints){
+                var endpoint = endpoints[nickname];
+                result[nickname] = {
+                    group: endpoint.group,
+                    nickname: nickname,
+                    password: endpoint.password,
+                    url: endpoint.url,
+                    username: endpoint.username
+                };
+            }
+            return result;
+        };
+
+        var saveEndpoints = function(){
+            var value = [];
+            for (var nickname in endpoints){
+                var endpoint = endpoints[nickname];
+                value.push({
+                    group: endpoint.group,
+                    nickname: nickname,
+                    password: endpoint.password,
+                    url: endpoint.url,
+                    username: endpoint.username
+                });
+            }
+            chrome.storage.sync.set(
+                {
+                    tabcastEndpoints: {
+                        endpoints: value,
+                        storageFormat: storageFormat
+                    }
+                },
+                function(){
+                    if (chrome.runtime.lastError){
+                        alert('Could not save settings! ' +
+                              chrome.runtime.lastError.message);
+                    }
+                }
+            );
+        };
+
+        var restoreSavedEndpoints = function(){
+            chrome.storage.sync.get(
+                {
+                    tabcastEndpoints: {
+                        endpoints: [
+                            {
+                                group: 'test',
+                                nickname: 'localhost-test',
+                                url: 'http://localhost:9999'
+                            }
+                        ],
+                        storageFormat: storageFormat
+                    }
+                },
+                function(settings){
+                    if (chrome.runtime.lastError){
+                        alert('Could not retrieve saved settings! ' +
+                              chrome.runtime.lastError.message);
+                    }
+                    else {
+                        console.log('Loaded stored settings', settings);
+                        if (settings.tabcastEndpoints.storageFormat === 1){
+                            var saved = settings.tabcastEndpoints.endpoints;
+                            for (var i = 0; i < saved.length; i++){
+                                addEndpoint(saved[i], false);
+                            }
+                        }
+                        else {
+                            console.log(
+                                'Unknown endpoint storage format (' +
+                                settings.tabcastEndpoints.storageFormat +
+                                ').');
+                        }
+                    }
+                }
+            );
+        };
+
+        // Unused.
+        var clearSavedEndpoints = function(){
+            chrome.storage.sync.set({
+                tabcastEndpoints: {
+                    endpoints: [],
+                    storageFormat: storageFormat
+                }
+            });
+        };
+
         return {
             addEndpoint: addEndpoint,
+            endpointsForOptions: endpointsForOptions,
             init: init,
             removeEndpoint: removeEndpoint
         };
@@ -434,10 +536,12 @@ var TC = {
                 function(socket){
                     try {
                         socket.emit('track', group);
+                        // Request the last url for the group, if any.
+                        socket.emit('last url', group);
                     }
                     catch (e){
-                        console.log('Could not send track command to ' +
-                                    nickname + ' server.' + '. ' +
+                        console.log('Could not send initial track commands ' +
+                                    'to ' + nickname + ' server.' + '. ' +
                                     e.name + ': ' + e.message);
                         return;
                     }

@@ -1,0 +1,29 @@
+extends layout
+
+block head
+  title Tabcast history for #{group}
+
+block body
+  div.hero-unit
+    h1 Tabcast history
+    p All URLs sent to the #{group} group
+  div
+    if urls.length
+      ul#urls.unstyled
+        for url in urls
+          li.url
+            a(href=#{url.url}) #{url.url}
+            br
+            | #{url.date}
+    else
+      | no urls
+
+block footer
+  script(src='/js/socket.io.min.js')
+  script(src='/js/mustache.js')
+  script(src='/js/jquery-1.8.2.min.js')
+  script(src='/js/client.js')
+  script
+    $(document).ready(function(){
+      TC.init('#{host}', '#{group}');
+    });

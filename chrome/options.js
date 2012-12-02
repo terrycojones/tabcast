@@ -1,15 +1,10 @@
 var OPTIONS = {
-    endpoints: {},
     endpointManager: null,
 
     init: function(){
-        // OPTIONS.reinitializeSettings();
-
-        // Get the endpoint manager from the background page
-        // and restore saved endpoints.
         chrome.runtime.getBackgroundPage(function(bgPage){
             OPTIONS.endpointManager = bgPage.TC.endpointManager;
-            OPTIONS.restore();
+            OPTIONS.displayEndpoints();
         });
 
         // React to storage changes (which could occur due to the
@@ -20,10 +15,15 @@ var OPTIONS = {
         });
     },
 
-    displayEndpoints: function(){
-        var nicknames = [];
+    endpoints: function(){
+        return OPTIONS.endpointManager.endpointsForOptions();
+    },
 
-        for (var nickname in OPTIONS.endpoints){
+    displayEndpoints: function(){
+        var endpoints = OPTIONS.endpoints(),
+            nicknames = [];
+
+        for (var nickname in endpoints){
             nicknames.push(nickname);
         }
 
@@ -31,10 +31,10 @@ var OPTIONS = {
         var data = [];
         for (var i = 0; i < nicknames.length; i++){
             data.push(
-                $.extend({index: i}, OPTIONS.endpoints[nicknames[i]])
+                $.extend({index: i}, endpoints[nicknames[i]])
             );
         }
-        
+
         // Render all endpoints and the create new endpoint forms.
         $('#existing-endpoints').mustache('existing-endpoints',
                                           { endpoints: data },
@@ -48,7 +48,7 @@ var OPTIONS = {
                 OPTIONS.submit();
             }
         });
-        
+
         // Show tabs on clicks.
         $('#myTab a').click(function (e) {
             e.preventDefault();
@@ -62,16 +62,14 @@ var OPTIONS = {
             return function(evt){
                 evt.preventDefault();
                 OPTIONS.endpointManager.removeEndpoint(nickname);
-                delete OPTIONS.endpoints[nickname];
-                OPTIONS.saveEndpoints();
                 OPTIONS.displayEndpoints();
             };
         };
-        
+
         var cloneCallback = function(nickname){
             return function(evt){
                 evt.preventDefault();
-                var endpoint = OPTIONS.endpoints[nickname];
+                var endpoint = OPTIONS.endpoints()[nickname];
                 $('#group').val(endpoint.group);
                 $('#nickname').val(endpoint.nickname);
                 $('#password').val(endpoint.password);
@@ -81,7 +79,7 @@ var OPTIONS = {
                 $('#tabs a:last').tab('show');
             };
         };
-        
+
         for (i = 0; i < nicknames.length; i++){
             $('#endpointClone_' + i).click(cloneCallback(nicknames[i]));
             $('#endpointDelete_' + i).click(removeCallback(nicknames[i]));
@@ -90,35 +88,9 @@ var OPTIONS = {
         // Render the introduction section.
         $('#intro').mustache(
             nicknames.length ? 'endpoints-intro' : 'no-endpoints-intro',
-            { 
+            {
                 count: nicknames.length,
                 groups: nicknames.length === 1 ? 'group' : 'groups'
-            }
-        );
-    },
-
-    restore: function(){
-        // Restore stored settings.
-        chrome.storage.sync.get(
-            {
-                tabcastSettings: {
-                    endpoints: {
-                        'localhost-test': {
-                            group: 'test',
-                            nickname: 'localhost-test',
-                            url: 'http://localhost:9999'
-                        }
-                    }
-                }
-            },
-            function(settings){
-                var endpoints = settings.tabcastSettings.endpoints;
-                for (var nickname in endpoints){
-                    var endpoint = endpoints[nickname];
-                    OPTIONS.endpointManager.addEndpoint(endpoint);
-                }
-                OPTIONS.endpoints = settings.tabcastSettings.endpoints;
-                OPTIONS.displayEndpoints();
             }
         );
     },
@@ -137,48 +109,22 @@ var OPTIONS = {
             endpoint.password = $('#password').val();
         }
 
-        OPTIONS.endpointManager.addEndpoint(endpoint);
-        OPTIONS.endpoints[endpoint.nickname] = endpoint;
-        OPTIONS.saveEndpoints();
-        
-        // Clear (only) the nickname field so the user can add another
-        // server easily.
+        // Tell the endpoint manager about the new endpoint.
+        OPTIONS.endpointManager.addEndpoint(endpoint, true);
+
+        // Clear just the nickname field so the user can add another
+        // similar endpoint easily.
         nickname.val('');
-        
+
         // Re-display endpoints.
         OPTIONS.displayEndpoints();
-    },
-    
-    saveEndpoints: function(){
-        chrome.storage.sync.set(
-            {
-                tabcastSettings: {
-                    endpoints: OPTIONS.endpoints
-                }
-            },
-            function(items){
-                if (chrome.runtime.lastError){
-                    alert('Could not save settings! ' +
-                          chrome.runtime.lastError.message);
-                }
-            }
-        );
     },
 
     validateNicknameFromForm: function($elt, nickname, callback){
         callback({
             message: 'Nickname already in use',
-            valid: OPTIONS.endpoints[nickname] === undefined,
+            valid: OPTIONS.endpoints()[nickname] === undefined,
             value: nickname
-        });
-    },
-
-    // Unused. See commented-out call in init() above.
-    reinitializeSettings: function(){
-        chrome.storage.sync.set({
-            tabcastSettings: {
-                endpoints: {}
-            }
         });
     }
 };
