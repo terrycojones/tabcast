@@ -16,7 +16,7 @@ var TC = {
                     var date = new Date(parseFloat(data.date)),
                         userURL = ('/view/' + encodeURIComponent(group) +
                                    '/?username=' +
-                                   encodeURIComponent(data.sername));
+                                   encodeURIComponent(data.username));
 
                     $('#urls').prepend(Mustache.render(
                         ('<li class="url"><a href="{{url}}">{{url}}</a><br/>' +

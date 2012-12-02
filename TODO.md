@@ -11,10 +11,10 @@
 
 ## Low priority
 
-- passwords could be encrypted
+- fix jade vs mustache discrepancy
 - temporarily highlight arriving items in /view
-- allow specifying a webhook for each endpoint
-- add title to URLs?
-- server command line args to set port
-- embed.ly?
-- editing endpoints
+- allow specifying a webhook for each endpoint?  but how? per user config?
+- get & add title to URLs?
+- use embed.ly in /view?
+- editing of endpoints
+- server command line arg to set port
