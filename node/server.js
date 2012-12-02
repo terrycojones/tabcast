@@ -20,7 +20,6 @@ app.configure(function() {
     var pub = __dirname + '/public';
     app.use(express.logger('dev'));
     app.use(express.static(pub));
-    app.use(express.bodyParser());
     app.use(express.favicon(__dirname + '/public/images/favicon.ico'));
     app.set('view engine', 'jade');
 });
@@ -51,9 +50,14 @@ app.get('/track/:group', function(req, res){
 });
 
 app.get('/view/:group', function(req, res){
-    console.log('Got /view request for group=' + req.params.group);
+    var group = req.params.group,
+        username = req.query.username;
+    console.log('Got /view request for group=' + group);
+    console.log('username: ', username);
+    var userPrefix = username ? ('user:' + username + ':') : '';
+
     db.zrevrange(
-        'group:' + req.params.group + ':urls', 0, 1000, 'withscores',
+        userPrefix + 'group:' + group + ':urls', 0, 1000, 'withscores',
         function(err, urls){
             if (err){
                 res.send(500);
@@ -61,16 +65,19 @@ app.get('/view/:group', function(req, res){
             else {
                 var data = [];
                 for (var i = 0; i < urls.length; i += 2){
+                    var item = JSON.parse(urls[i]);
                     var date = new Date(parseFloat(urls[i + 1]));
                     data.push({
                         date: date.toUTCString(),
-                        url: urls[i]
+                        url: item.url,
+                        username: item.username
                     });
                 }
                 res.render('view', {
-                    group: req.params.group,
+                    group: group,
                     host: scheme + '://' + req.host + ':' + port,
                     urls: data,
+                    username: username,
                     title: 'my fab title'
                 });
             }

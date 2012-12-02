@@ -37,10 +37,12 @@ exports.init = function(db, server){
                     }
                     else {
                         if (urls.length){
+                            var data = JSON.parse(urls[0]);
                             socket.emit('url', {
                                 date: urls[1],
                                 group: group,
-                                url: urls[0]
+                                url: data.url,
+                                username: data.username
                             });
                         }
                     }
@@ -52,10 +54,12 @@ exports.init = function(db, server){
             console.log('Received url ' + data.url + ' for group ' + data.group);
             auth.checkPassword(data, function(valid){
                 if (valid){
-                    var date = Date.now();
-                    data.date = date;
-                    db.zadd('group:' + data.group + ':urls', date, data.url);
                     delete data['password'];
+                    var date = Date.now();
+                    data.username = data.username || 'anon';
+                    db.zadd('group:' + data.group + ':urls', date, JSON.stringify(data));
+                    db.zadd('user:' + data.username + ':group:' + data.group + ':urls', date, JSON.stringify(data));
+                    data.date = date;
                     io.sockets.in(data.group).emit('url', data);
                 }
                 else {
