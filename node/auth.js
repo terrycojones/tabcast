@@ -33,7 +33,7 @@ exports.checkPassword = function(data, callback){
         else {
             // A user sending no password is ok, as long as no
             // password has previously been given for the user.
-            getPassword(data.username, function(password){
+            getPassword(data.username, data.group, function(password){
                 callback(password ? false : true);
             });
         }

@@ -104,7 +104,8 @@ var TC = {
             broadcastMenuItem,
             sendMenuItem,
             storageFormat = 1,
-            trackMenuItem;
+            trackMenuItem,
+            viewHistoryMenuItem;
 
         var init = function(){
             shared.endpoints = endpoints;
@@ -125,6 +126,11 @@ var TC = {
 
             trackMenuItem = chrome.contextMenus.create({
                 title: 'Track group',
+                contexts: ['all']
+            });
+
+            viewHistoryMenuItem = chrome.contextMenus.create({
+                title: 'View URL history',
                 contexts: ['all']
             });
         };
@@ -165,6 +171,15 @@ var TC = {
                 type: 'checkbox',
                 onclick : function(info, tab){
                     shared.trackMenuClick(nickname, info, tab);
+                }
+            });
+
+            var viewHistoryContextMenuId = chrome.contextMenus.create({
+                contexts: ['all'],
+                parentId: viewHistoryMenuItem,
+                title: nickname,
+                onclick : function(info, tab){
+                    shared.viewHistoryMenuClick(nickname, tab);
                 }
             });
 
@@ -661,6 +676,13 @@ var TC = {
                 tabs[tab.id].broadcast[nickname] = false;
                 updateBadge(tab.id);
             }
+        };
+
+        shared.viewHistoryMenuClick = function(nickname, tab){
+            var endpoint = shared.endpoints[nickname];
+            chrome.tabs.update(tab.id, {
+                url: endpoint.url + 'view/' + endpoint.group
+            });
         };
 
         shared.endpointAdded = function(nickname){
