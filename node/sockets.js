@@ -9,7 +9,8 @@ exports.init = function(db, server){
         io.enable('browser client gzip');
         io.set('log level', 1);
         io.set('transports', [
-            'websocket', 'flashsocket', 'htmlfile', 'xhr-polling', 'jsonp-polling'
+            'websocket', 'flashsocket', 'htmlfile', 'xhr-polling',
+            'jsonp-polling'
         ]);
     });
 
@@ -25,7 +26,7 @@ exports.init = function(db, server){
             console.log('Tracking ' + group);
             socket.join(group);
         });
-        
+
         socket.on('last url', function(group){
             console.log('Last URL request for group ' + group);
             // Send just this socket the last URL (if any) for the group.
@@ -33,7 +34,8 @@ exports.init = function(db, server){
                 'group:' + group + ':urls', 0, 1, 'withscores',
                 function(err, urls){
                     if (err){
-                        console.log('Error getting last URL for group ' + group, err);
+                        console.log('Error getting last URL for group ' +
+                                    group, err);
                     }
                     else {
                         if (urls.length){
@@ -51,21 +53,24 @@ exports.init = function(db, server){
         });
 
         socket.on('url', function(data){
-            console.log('Received url ' + data.url + ' for group ' + data.group);
+            console.log('Got url ' + data.url + ' for group ' + data.group);
             auth.checkPassword(data, function(valid){
+                delete data['password'];
                 if (valid){
-                    delete data['password'];
                     var date = Date.now();
                     data.username = data.username || 'anon';
-                    db.zadd('group:' + data.group + ':urls', date, JSON.stringify(data));
-                    db.zadd('user:' + data.username + ':group:' + data.group + ':urls', date, JSON.stringify(data));
+                    db.zadd('group:' + data.group + ':urls', date,
+                            JSON.stringify(data));
+                    db.zadd(('user:' + data.username + ':group:' +
+                             data.group + ':urls'), date,
+                            JSON.stringify(data));
                     data.date = date;
                     io.sockets.in(data.group).emit('url', data);
                 }
                 else {
-                    console.log('Incorrect auth details for user "' + data.username +
-                                '" sending url ' + data.url + ' to group ' +
-                                data.group);
+                    console.log('Incorrect auth details for user "' +
+                                data.username + '" sending url ' + data.url +
+                                ' to group ' + data.group);
                     socket.emit('authentication failed', data);
                 }
             });

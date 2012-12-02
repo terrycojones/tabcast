@@ -1,45 +1,68 @@
 var redis = require('redis'),
-    db = redis.createClient();
+    db = redis.createClient(),
+    bcrypt = require('bcrypt');
+
+var keyForUserPlusGroup = function(username, group){
+    return 'password:' + group + ':' + username;
+};
 
 var getPassword = function(username, group, callback){
-    db.get('password:' + group + ':username', function(err, password){
+    db.get(keyForUserPlusGroup(username, group), function(err, password){
         callback(password);
     });
 };
 
 var setPassword = function(username, password, group, callback){
-    db.set('password:' + group + ':username', password, function(){
-        callback();
-    });
-};
-
-exports.checkPassword = function(data, callback){
-    if (data.username){
-        if (data.password){
-            getPassword(data.username, data.group, function(storedPassword){
-                if (storedPassword){
-                    callback(data.password === storedPassword);
+    bcrypt.genSalt(function(err, salt){
+        if (err){
+            callback(err);
+        }
+        else {
+            bcrypt.hash(password, salt, function(err, hashedPassword){
+                if (err){
+                    callback(err);
                 }
                 else {
-                    // First time we've seen a password from this user.
-                    setPassword(
-                        data.username, data.password, data.group, function(){
-                            callback(true);
+                    db.set(
+                        keyForUserPlusGroup(username, group), hashedPassword,
+                        function(){
+                            callback();
                         }
                     );
                 }
             });
         }
-        else {
-            // A user sending no password is ok, as long as no
-            // password has previously been given for the user.
-            getPassword(data.username, data.group, function(password){
-                callback(password ? false : true);
-            });
-        }
+    });
+};
+
+exports.checkPassword = function(data, callback){
+    var username = data.username || 'anon';
+    if (data.password){
+        getPassword(username, data.group, function(storedPassword){
+            if (storedPassword){
+                bcrypt.compare(
+                    data.password, storedPassword,
+                    function(err, result){
+                        callback(err ? false : result);
+                    }
+                );
+            }
+            else {
+                // First time we've seen a password from this user.
+                setPassword(
+                    username, data.password, data.group, function(err){
+                        callback(err ? false : true);
+                    }
+                );
+            }
+        });
     }
     else {
-        // Anon request, always OK.
-        callback(true);
+        // A user sending no password is ok, as long as no
+        // password has previously been given for the user.
+        getPassword(username, data.group, function(password){
+            console.log('got stored password: ' + password);
+            callback(password ? false : true);
+        });
     }
 };

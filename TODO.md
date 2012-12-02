@@ -7,6 +7,7 @@
 - confirm endpoint delete
 - in options, tabs don't all look right (all but + have a line under them)
 - home page should say more
+- sort nicknames in context menu
 
 ## Low priority
 
@@ -16,3 +17,4 @@
 - add title to URLs?
 - server command line args to set port
 - embed.ly?
+- editing endpoints

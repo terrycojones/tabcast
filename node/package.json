@@ -4,10 +4,11 @@
   "version": "0.0.1",
   "private": false,
   "dependencies": {
+    "bcrypt": "0.7.3",
     "express": "3.0.2",
-    "jade": "*",
-    "redis": "*",
-    "hiredis": "*",
+    "jade": "0.27.7",
+    "redis": "0.8.2",
+    "hiredis": "0.1.14",
     "socket.io": "0.9.11"
   }
 }
