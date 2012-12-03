@@ -72,8 +72,6 @@ var OPTIONS = {
                 var endpoint = OPTIONS.endpoints()[nickname];
                 $('#group').val(endpoint.group);
                 $('#nickname').val(endpoint.nickname);
-                $('#password').val(endpoint.password);
-                $('#passwordConfirm').val(endpoint.password);
                 $('#url').val(endpoint.url);
                 $('#username').val(endpoint.username);
                 $('#tabs a:last').tab('show');
