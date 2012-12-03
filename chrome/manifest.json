@@ -1,6 +1,6 @@
 {
   "name": "Tabcast",
-  "version": "0.0.291",
+  "version": "0.0.292",
   "description": "Broadcast the URLs you visit in specific tabs, and automatically track other people or groups.",
   "update_url": "https://fluiddb.fluidinfo.com/about/tabcast/fluidinfo.com/chrome-update.xml",
   "manifest_version": 2,
@@ -27,10 +27,7 @@
     "128" : "images/logo-128.png"
   },
   "browser_action": {
-    "default_icon": {
-      "19": "images/logo-19.png",
-      "38": "images/logo-38.png"
-    },
+    "default_icon": "images/icon-38.png",
     "default_title": "Tabcast"
   }
 }
