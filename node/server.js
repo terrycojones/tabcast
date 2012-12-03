@@ -17,7 +17,7 @@ app.configure(function() {
     var pub = __dirname + '/public';
     app.use(express.logger('dev'));
     app.use(express.static(pub));
-    app.use(express.favicon(__dirname + '/public/images/favicon.ico'));
+    app.use(express.favicon(__dirname + '/public/favicon.ico'));
     app.set('view engine', 'jade');
 });
 
