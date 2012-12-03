@@ -61,8 +61,11 @@ var OPTIONS = {
         var removeCallback = function(nickname){
             return function(evt){
                 evt.preventDefault();
-                OPTIONS.endpointManager.removeEndpoint(nickname);
-                OPTIONS.displayEndpoints();
+                if (confirm('Are you sure you want to remove the ' + nickname +
+                            ' group?')){
+                    OPTIONS.endpointManager.removeEndpoint(nickname);
+                    OPTIONS.displayEndpoints();
+                }
             };
         };
 
