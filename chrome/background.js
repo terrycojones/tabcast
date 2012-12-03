@@ -205,9 +205,7 @@ var TC = {
         };
 
         var removeEndpoint = function(nickname){
-            console.log('Removing endpoint ' + nickname);
             shared.endpointRemoved(nickname);
-            console.log('Removing context menu items');
             chrome.contextMenus.remove(endpoints[nickname].broadcastContextMenuId);
             chrome.contextMenus.remove(endpoints[nickname].sendContextMenuId);
             chrome.contextMenus.remove(endpoints[nickname].trackContextMenuId);
@@ -331,7 +329,6 @@ var TC = {
             chrome.tabs.onCreated.addListener(function(tab){
                 // Note that chrome.tabs.onUpdated is not called for
                 // newly created tabs.
-                console.log('tab ' + tab.id + ' created for url ' + tab.url);
                 var broadcast = {};
                 for (var nickname in shared.endpoints){
                     broadcast[nickname] = false;
@@ -354,7 +351,6 @@ var TC = {
             // When a tab is removed, it must release any tracking or
             // broadcasting sockets it has in use.
             chrome.tabs.onRemoved.addListener(function(tabId){
-                console.log('tab removed');
                 var nickname;
                 if (tabs[tabId].tracking){
                     nickname = tabs[tabId].tracking.nickname;
@@ -380,11 +376,9 @@ var TC = {
             chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
                 if (changeInfo.status === 'loading'){
                     tabs[tabId].url = tab.url;
-                    console.log('tab ' + tabId + ' updated (' + changeInfo.status + ') to url ' + tab.url);
                     if (tabs[tabId].tracking){
                         // This tab is tracking an endpoint.
                         if (tab.url !== tabs[tabId].tracking.url){
-                            console.log('local user goes to new URL in tracking tab');
                             broadcast(tab, tabs[tabId].tracking.nickname);
                         }
                         updateBadge(tabId);
@@ -434,7 +428,6 @@ var TC = {
                     // An endpoint is being tracked, so all broadcast
                     // context menu items should be shown as disabled.
                     var tracking = tabs[activeInfo.tabId].tracking;
-                    console.log('Updating context menu for tracking tab.');
                     for (nickname in shared.endpoints){
                         chrome.contextMenus.update(
                             shared.endpoints[nickname].trackContextMenuId, {
@@ -544,7 +537,6 @@ var TC = {
         var track = function(tabId, nickname, group){
             // Set the passed tab up to track a group on an endpoint.
             var tab = tabs[tabId];
-            console.log('Tab visits tracking endpoint ' + nickname);
             return $.when(
                 shared.endpoints[nickname].trackSocket.get()
             ).then(
@@ -715,7 +707,6 @@ var TC = {
                 var tracking = tabs[tabId].tracking;
                 if (tracking && tracking.nickname === nickname &&
                     tracking.group === data.group){
-                    console.log('Tracking tab nickname & group match incoming URL.');
                     // Only update a tracking tab if it's not already at the
                     // desired URL.   This is not perfect - what if someone
                     // else is driving the session and they deliberately do
@@ -723,14 +714,12 @@ var TC = {
                     // if we have one and tabid.
                     if (tabs[tabId].url !== data.url){
                         tracking.url = data.url;
-                        console.log('updating tab ' + tabId + ' + to url ' + data.url);
                         chrome.tabs.update(
                             parseInt(tabId, 10),
                             {
                                 url: data.url
                             },
                             function(tab){
-                                console.log('setting badge on tab ' + tab.id);
                                 updateBadge(tab.id);
                             }
                         );
