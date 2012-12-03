@@ -733,6 +733,9 @@ var TC = {
         shared.urlReceived = function(nickname, data){
             console.log('URL received for ' + nickname + '. url=' +
                         data.url + ' group=' + data.group);
+            var updateBadgeForTab = function(tab){
+                updateBadge(tab.id);
+            };
             for (var tabId in tabs){
                 var tracking = tabs[tabId].tracking;
                 if (tracking && tracking.nickname === nickname &&
@@ -749,9 +752,7 @@ var TC = {
                             {
                                 url: data.url
                             },
-                            function(tab){
-                                updateBadge(tab.id);
-                            }
+                            updateBadgeForTab
                         );
                     }
                     else {
