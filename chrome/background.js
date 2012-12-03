@@ -257,7 +257,7 @@ var TC = {
                 );
             }
             else {
-                localStorage['tabcastEndpoints'] = JSON.stringify({
+                localStorage.tabcastEndpoints = JSON.stringify({
                     endpoints: value,
                     storageFormat: storageFormat
                 });
@@ -311,8 +311,7 @@ var TC = {
             else {
                  restore(
                      JSON.parse(
-                         localStorage['tabcastEndpoints'] ||
-                             defaultEndpoints
+                         localStorage.tabcastEndpoints || defaultEndpoints
                      )
                  );
             }
@@ -330,7 +329,7 @@ var TC = {
                 chrome.storage.sync.set(empty);
             }
             else {
-                localStorage['tabcastEndpoints'] = JSON.stringify(empty);
+                localStorage.tabcastEndpoints = JSON.stringify(empty);
             }
         };
 
@@ -362,7 +361,7 @@ var TC = {
                 var broadcast = {};
                 for (var nickname in shared.endpoints){
                     broadcast[nickname] = false;
-                };
+                }
                 tabs[tab.id] = {
                     broadcast: broadcast,
                     tracking: null,
@@ -394,7 +393,7 @@ var TC = {
                             shared.endpoints[nickname]
                                 .broadcastSocket.release();
                         }
-                    };
+                    }
                 }
                 delete tabs[tabId];
             });
@@ -414,12 +413,13 @@ var TC = {
                         updateBadge(tabId);
                     }
                     else {
-                        var tracking = checkIfTabIsOpeningAnEndpoint(tab);
+                        var tracking = checkIfTabIsOpeningAnEndpoint(tab),
+                            nickname;
                         if (tracking){
                             // This tab is about to track an endpoint, so
                             // we must disable any broadcasting it is doing (other
                             // than to the endpoint we're about to track).
-                            for (var nickname in shared.endpoints){
+                            for (nickname in shared.endpoints){
                                 if (tabs[tabId].broadcast[nickname] &&
                                     nickname !== tracking.nickname){
                                     shared.endpoints[nickname].broadcastSocket
@@ -710,7 +710,7 @@ var TC = {
         shared.endpointAdded = function(nickname){
             for (var tabId in tabs){
                 tabs[tabId].broadcast[nickname] = false;
-            };
+            }
         };
 
         shared.endpointRemoved = function(nickname){
@@ -756,7 +756,7 @@ var TC = {
                     }
                     else {
                         console.log('tracking tag already open on url ' + data.url);
-                    };
+                    }
                 }
                 else {
                     if (tracking){

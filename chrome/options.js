@@ -10,7 +10,7 @@ var OPTIONS = {
         // React to storage changes (which could occur due to the
         // user using Chrome on another box & the changes being
         // synchronized locally).
-        chrome.storage.onChanged.addListener(function(changes){
+        chrome.storage.onChanged.addListener(function(){
             OPTIONS.displayEndpoints();
         });
     },

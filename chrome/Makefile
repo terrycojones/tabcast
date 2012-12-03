@@ -19,6 +19,10 @@ dist: crx
 	./bin/upload-crx.py export/$(NAME).crx
 	./bin/upload-update-manifest.py < export/$(NAME)/manifest.json
 
+lint:
+	-jshint --show-non-errors background.js
+	-jshint --show-non-errors options.js
+
 clean:
 	find . -name '*~' | xargs -r rm
 	rm -fr export
