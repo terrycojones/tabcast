@@ -12,6 +12,7 @@ exports.init = function(db, server){
             'websocket', 'flashsocket', 'htmlfile', 'xhr-polling',
             'jsonp-polling'
         ]);
+        console.log('socket.io configured for production.');
     });
 
     io.configure('development', function(){
