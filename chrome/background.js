@@ -240,68 +240,98 @@ var TC = {
                     username: endpoint.username
                 });
             }
-            chrome.storage.sync.set(
-                {
-                    tabcastEndpoints: {
-                        endpoints: value,
-                        storageFormat: storageFormat
+            if (chrome.storage){
+                chrome.storage.sync.set(
+                    {
+                        tabcastEndpoints: {
+                            endpoints: value,
+                            storageFormat: storageFormat
+                        }
+                    },
+                    function(){
+                        if (chrome.runtime.lastError){
+                            alert('Could not save settings! ' +
+                                  chrome.runtime.lastError.message);
+                        }
                     }
-                },
-                function(){
-                    if (chrome.runtime.lastError){
-                        alert('Could not save settings! ' +
-                              chrome.runtime.lastError.message);
-                    }
-                }
-            );
+                );
+            }
+            else {
+                localStorage['tabcastEndpoints'] = JSON.stringify({
+                    endpoints: value,
+                    storageFormat: storageFormat
+                });
+            }
         };
 
         var restoreSavedEndpoints = function(){
-            chrome.storage.sync.get(
-                {
-                    tabcastEndpoints: {
-                        endpoints: [
-                            {
-                                group: 'test',
-                                nickname: 'localhost-test',
-                                url: 'http://localhost:9999'
-                            }
-                        ],
-                        storageFormat: storageFormat
+            var defaultEndpoints = {
+                endpoints: [
+                    {
+                        group: 'test',
+                        nickname: 'localhost-test',
+                        url: 'http://localhost:9999'
                     }
-                },
-                function(settings){
-                    if (chrome.runtime.lastError){
-                        alert('Could not retrieve saved settings! ' +
-                              chrome.runtime.lastError.message);
-                    }
-                    else {
-                        console.log('Loaded stored settings', settings);
-                        if (settings.tabcastEndpoints.storageFormat === 1){
-                            var saved = settings.tabcastEndpoints.endpoints;
-                            for (var i = 0; i < saved.length; i++){
-                                addEndpoint(saved[i], false);
-                            }
-                        }
-                        else {
-                            console.log(
-                                'Unknown endpoint storage format (' +
-                                settings.tabcastEndpoints.storageFormat +
-                                ').');
-                        }
+                ],
+                storageFormat: storageFormat
+            };
+
+            var restore = function(settings){
+                console.log('Loaded stored settings', settings);
+                if (settings.tabcastEndpoints.storageFormat === 1){
+                    var saved = settings.tabcastEndpoints.endpoints;
+                    for (var i = 0; i < saved.length; i++){
+                        addEndpoint(saved[i], false);
                     }
                 }
-            );
+                else {
+                    console.log(
+                        'Unknown endpoint storage format (' +
+                        settings.tabcastEndpoints.storageFormat +
+                        ').');
+                }
+            };
+
+            if (chrome.storage){
+                chrome.storage.sync.get(
+                    {
+                        tabcastEndpoints: defaultEndpoints
+                    },
+                    function(settings){
+                        if (chrome.runtime.lastError){
+                            alert('Could not retrieve saved settings! ' +
+                                  chrome.runtime.lastError.message);
+                        }
+                        else {
+                            restore(settings);
+                        }
+                    }
+                );
+            }
+            else {
+                 restore(
+                     JSON.parse(
+                         localStorage['tabcastEndpoints'] ||
+                             defaultEndpoints
+                     )
+                 );
+            }
         };
 
         // Unused.
         var clearSavedEndpoints = function(){
-            chrome.storage.sync.set({
+            var empty = {
                 tabcastEndpoints: {
                     endpoints: [],
                     storageFormat: storageFormat
                 }
-            });
+            };
+            if (chrome.storage){
+                chrome.storage.sync.set(empty);
+            }
+            else {
+                localStorage['tabcastEndpoints'] = JSON.stringify(empty);
+            }
         };
 
         return {
