@@ -1,8 +1,5 @@
 #!/usr/bin/env node
 
-// I don't yet know how to determine the request scheme.
-var scheme = 'http';
-
 var port = 9999,
     express = require('express'),
     redis = require('redis'),
@@ -33,6 +30,9 @@ app.configure('development', function(){
 
 app.configure('production', function(){
     app.use(express.errorHandler());
+    // Set 'trust proxy' to true if we're sitting behind a proxy, e.g.,
+    // nginx.
+    app.enable('trust proxy');
 });
 
 app.get('/track/:group', function(req, res){
@@ -75,7 +75,7 @@ app.get('/view/:group', function(req, res){
                 }
                 res.render('view', {
                     group: group,
-                    host: scheme + '://' + req.host + ':' + port,
+                    host: req.protocol + '://' + req.host + ':' + port,
                     urls: data,
                     username: username,
                     title: 'my fab title'
