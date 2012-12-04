@@ -63,7 +63,6 @@ var TC = {
                 return deferred.promise();
             }
             else {
-                console.log('socket already existed.');
                 return socket;
             }
         };
@@ -135,79 +134,67 @@ var TC = {
             });
         };
 
-        var addContextSubmenus = function(){
-            var endpoint,
-                nickname,
-                nicknames = [];
-            for (nickname in endpoints){
-                nicknames.push(nickname);
-            }
-            nicknames.sort();
+        var addContextSubmenus = function(nickname){
+            var endpoint = endpoints[nickname];
 
-            for (var i = 0; i < nicknames.length; i++){
-                nickname = nicknames[i];
-                endpoint = endpoints[nickname];
+            var broadcastContextMenuId = chrome.contextMenus.create({
+                checked: false,
+                contexts: ['all'],
+                parentId: broadcastMenuItem,
+                title: nickname,
+                type: 'checkbox',
+                onclick : function(info, tab){
+                    shared.broadcastMenuClick(nickname, info, tab);
+                }
+            });
 
-                var broadcastContextMenuId = chrome.contextMenus.create({
-                    checked: false,
-                    contexts: ['all'],
-                    parentId: broadcastMenuItem,
-                    title: nickname,
-                    type: 'checkbox',
-                    onclick : function(info, tab){
-                        shared.broadcastMenuClick(nickname, info, tab);
-                    }
-                });
+            var sendContextMenuId = chrome.contextMenus.create({
+                contexts: ['all'],
+                parentId: sendMenuItem,
+                title: nickname,
+                onclick : function(info, tab){
+                    shared.sendMenuClick(nickname, tab);
+                }
+            });
 
-                var sendContextMenuId = chrome.contextMenus.create({
-                    contexts: ['all'],
-                    parentId: sendMenuItem,
-                    title: nickname,
-                    onclick : function(info, tab){
-                        shared.sendMenuClick(nickname, tab);
-                    }
-                });
+            var trackContextMenuId = chrome.contextMenus.create({
+                checked: false,
+                contexts: ['all'],
+                parentId: trackMenuItem,
+                title: nickname,
+                type: 'checkbox',
+                onclick : function(info, tab){
+                    shared.trackMenuClick(nickname, info, tab);
+                }
+            });
 
-                var trackContextMenuId = chrome.contextMenus.create({
-                    checked: false,
-                    contexts: ['all'],
-                    parentId: trackMenuItem,
-                    title: nickname,
-                    type: 'checkbox',
-                    onclick : function(info, tab){
-                        shared.trackMenuClick(nickname, info, tab);
-                    }
-                });
+            var viewHistoryContextMenuId = chrome.contextMenus.create({
+                contexts: ['all'],
+                parentId: viewHistoryMenuItem,
+                title: nickname,
+                onclick : function(info, tab){
+                    shared.viewHistoryMenuClick(nickname, tab);
+                }
+            });
 
-                var viewHistoryContextMenuId = chrome.contextMenus.create({
-                    contexts: ['all'],
-                    parentId: viewHistoryMenuItem,
-                    title: nickname,
-                    onclick : function(info, tab){
-                        shared.viewHistoryMenuClick(nickname, tab);
-                    }
-                });
-
-                endpoint.broadcastContextMenuId = broadcastContextMenuId;
-                endpoint.sendContextMenuId = sendContextMenuId;
-                endpoint.trackContextMenuId = trackContextMenuId;
-                endpoint.viewHistoryContextMenuId = viewHistoryContextMenuId;
-            }
+            endpoint.broadcastContextMenuId = broadcastContextMenuId;
+            endpoint.sendContextMenuId = sendContextMenuId;
+            endpoint.trackContextMenuId = trackContextMenuId;
+            endpoint.viewHistoryContextMenuId = viewHistoryContextMenuId;
         };
 
-        var removeContextSubmenus = function(){
-            for (var nickname in endpoints){
-                var endpoint = endpoints[nickname];
-                chrome.contextMenus.remove(endpoint.broadcastContextMenuId);
-                chrome.contextMenus.remove(endpoint.sendContextMenuId);
-                chrome.contextMenus.remove(endpoint.trackContextMenuId);
-                chrome.contextMenus.remove(endpoint.viewHistoryContextMenuId);
-            }
+        var removeContextSubmenus = function(nickname){
+            var endpoint = endpoints[nickname];
+            chrome.contextMenus.remove(endpoint.broadcastContextMenuId);
+            chrome.contextMenus.remove(endpoint.sendContextMenuId);
+            chrome.contextMenus.remove(endpoint.trackContextMenuId);
+            chrome.contextMenus.remove(endpoint.viewHistoryContextMenuId);
         };
 
         var addEndpoint = function(options, save){
             var nickname = options.nickname,
-                url = options.url;
+                url = options.url,
+                existingNickname;
 
             // Endpoint URLs must end in a slash.
             url += (options.url.charAt(options.url.length - 1) === '/' ?
@@ -218,8 +205,9 @@ var TC = {
             // some trivial optimizations here at the cost of code
             // simplicity - if there are no endpoints or if the new one
             // would be at the end).
-
-            removeContextSubmenus();
+            for (existingNickname in endpoints){
+                removeContextSubmenus(existingNickname);
+            }
 
             endpoints[nickname] = {
                 broadcastSocket: obj.SocketManager(url, nickname),
@@ -232,7 +220,15 @@ var TC = {
                 username: options.username
             };
 
-            addContextSubmenus();
+            // Add all context submenus, in sorted order.
+            var nicknames = [];
+            for (existingNickname in endpoints){
+                nicknames.push(existingNickname);
+            }
+            nicknames.sort();
+            for (var i = 0; i < nicknames.length; i++){
+                addContextSubmenus(nicknames[i]);
+            }
 
             if (save){
                 saveEndpoints();
@@ -243,11 +239,7 @@ var TC = {
 
         var removeEndpoint = function(nickname){
             shared.endpointRemoved(nickname);
-            var endpoint = endpoints[nickname];
-            chrome.contextMenus.remove(endpoint.broadcastContextMenuId);
-            chrome.contextMenus.remove(endpoint.sendContextMenuId);
-            chrome.contextMenus.remove(endpoint.trackContextMenuId);
-            chrome.contextMenus.remove(endpoint.viewHistoryContextMenuId);
+            removeContextSubmenus(nickname);
             delete endpoints[nickname];
         };
 
@@ -292,6 +284,9 @@ var TC = {
                             alert('Could not save settings! ' +
                                   chrome.runtime.lastError.message);
                         }
+                        else {
+                            console.log('Saved endpoints.');
+                        }
                     }
                 );
             }
@@ -307,16 +302,16 @@ var TC = {
             var defaultEndpoints = {
                 endpoints: [
                     {
-                        group: 'test',
-                        nickname: 'localhost-test',
-                        url: 'http://localhost:9999'
+                        group: 'public',
+                        nickname: 'public',
+                        url: 'http://tabcast.net'
                     }
                 ],
                 storageFormat: storageFormat
             };
 
             var restore = function(settings){
-                console.log('Loaded stored settings', settings);
+                console.log('Loaded stored endpoints.');
                 if (settings.tabcastEndpoints.storageFormat === 1){
                     var saved = settings.tabcastEndpoints.endpoints;
                     for (var i = 0; i < saved.length; i++){
