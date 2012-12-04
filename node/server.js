@@ -75,7 +75,11 @@ app.get('/view/:group', function(req, res){
                 }
                 res.render('view', {
                     group: group,
-                    host: req.protocol + '://' + req.host + ':' + port,
+                    // If the public/js/client.js client needs to connect
+                    // back to us using our port, use the next line and
+                    // comment out the one after it.
+                    // host: req.protocol + '://' + req.host + ':' + port,
+                    host: req.protocol + '://' + req.host,
                     urls: data,
                     username: username,
                     title: 'my fab title'
