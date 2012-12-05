@@ -112,23 +112,23 @@ var TC = {
             // clearSavedEndpoints();
             restoreSavedEndpoints();
 
+            viewHistoryMenuItem = chrome.contextMenus.create({
+                title: 'See the URL history for',
+                contexts: ['all']
+            });
+
             broadcastMenuItem = chrome.contextMenus.create({
-                title: 'Broadcast all URLs to',
+                title: "Send all URLs from this tab to",
                 contexts: ['all']
             });
 
             sendMenuItem = chrome.contextMenus.create({
-                title: 'Send current URL to',
+                title: 'Send just the current URL to',
                 contexts: ['all']
             });
 
             trackMenuItem = chrome.contextMenus.create({
-                title: 'Track group',
-                contexts: ['all']
-            });
-
-            viewHistoryMenuItem = chrome.contextMenus.create({
-                title: 'View URL history',
+                title: 'Synchronize this tab with',
                 contexts: ['all']
             });
         };
