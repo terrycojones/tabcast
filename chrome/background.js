@@ -240,6 +240,7 @@ var TC = {
             shared.endpointRemoved(nickname);
             removeContextSubmenus(nickname);
             delete endpoints[nickname];
+            saveEndpoints();
         };
 
         var endpointsForOptions = function(){
@@ -384,7 +385,7 @@ var TC = {
             badgeBroadcastingBackgroundColor = '#F00',
             // Despite Chrome docs, badge text should only be 3 chars, due
             // to problem on Linux.
-            badgeTrackingText = ' + ';
+            badgeTrackingText = ' S ';  // S = synchronized.
 
         var init = function(){
             chrome.tabs.onCreated.addListener(function(tab){
