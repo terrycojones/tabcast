@@ -2,7 +2,6 @@
 
 ## High priority
 
-- badge updating should only happen when a tab is made active.
 - in options, tabs don't all look right (all but + have a line under them)
 - home page should say more
 

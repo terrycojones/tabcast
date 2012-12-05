@@ -669,7 +669,8 @@ var TC = {
         var updateBadge = function(tabId){
             if (tabs[tabId].tracking){
                 chrome.browserAction.setBadgeBackgroundColor({
-                    color: badgeTrackingBackgroundColor
+                    color: badgeTrackingBackgroundColor,
+                    tabId: tabId
                 });
                 chrome.browserAction.setBadgeText({
                     tabId: tabId,
@@ -685,7 +686,8 @@ var TC = {
                     }
                 }
                 chrome.browserAction.setBadgeBackgroundColor({
-                    color: badgeBroadcastingBackgroundColor
+                    color: badgeBroadcastingBackgroundColor,
+                    tabId: tabId
                 });
                 chrome.browserAction.setBadgeText({
                     tabId: tabId,
