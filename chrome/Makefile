@@ -12,11 +12,9 @@ cws: extract
 	mv export/$(NAME)/manifest.new export/$(NAME)/manifest.json
 	cp PRIVATE-KEY export/$(NAME)/key.pem
 	cd export && zip -qr -9 -X $(NAME)-for-chrome-web-store $(NAME)
-	rm -r export/$(NAME)
 
 crx: extract
 	cd export && ../bin/create-crx.sh $(NAME) ../PRIVATE-KEY
-	rm -r export/$(NAME)
 
 dist: crx
 	./bin/upload-crx.py export/$(NAME).crx
