@@ -2,6 +2,8 @@ extends layout
 
 block head
   title Tabcast!
+  link(rel="chrome-webstore-item", href="https://chrome.google.com/webstore/detail/nknjamdijihneiclbpmcmfklakjkgdpf")
+
 
 block body
   div.hero-unit
@@ -11,3 +13,13 @@ block body
     p.
       This is the site
       where you'll find it all!
+    p
+      img#install(src="images/add-to-chrome.png")
+
+block footer
+  script(src='/js/jquery-1.8.2.min.js')
+  script(src='/js/home.js')
+  script
+    $(document).ready(function(){
+      tabcast.init();
+    });

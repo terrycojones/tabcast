@@ -1,19 +1,22 @@
 NAME := tabcast-extension
 
-zip:
+extract:
 	rm -fr export
 	mkdir export
 	git archive --prefix=$(NAME)/ -v --format zip HEAD > export/$(NAME).zip
 	cd export && unzip -o $(NAME).zip
-	rm export/$(NAME).zip
-	rm -fr export/$(NAME)/PRIVATE-KEY \
-            export/$(NAME)/Makefile \
-            export/$(NAME)/.gitignore \
-            export/$(NAME)/bin
-	cd export && zip -qr -9 -X $(NAME) $(NAME)
+	rm -r export/$(NAME).zip export/$(NAME)/Makefile export/$(NAME)/bin
 
-crx: zip
+cws: extract
+	grep -v '"update_url":' export/$(NAME)/manifest.json > export/$(NAME)/manifest.new
+	mv export/$(NAME)/manifest.new export/$(NAME)/manifest.json
+	cp PRIVATE-KEY export/$(NAME)/key.pem
+	cd export && zip -qr -9 -X $(NAME)-for-chrome-web-store $(NAME)
+	rm -r export/$(NAME)
+
+crx: extract
 	cd export && ../bin/create-crx.sh $(NAME) ../PRIVATE-KEY
+	rm -r export/$(NAME)
 
 dist: crx
 	./bin/upload-crx.py export/$(NAME).crx

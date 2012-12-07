@@ -1,8 +1,10 @@
 #!/bin/bash -e
 #
 # Purpose: Pack a Chromium extension directory into crx format
-#
 # Adapted from http://developer.chrome.com/extensions/crx.html
+#
+# Given a directory name ($1) containing an extension, write ./name.crx
+# (where 'name' is the name of the directory).
 
 if test $# -ne 2
 then
