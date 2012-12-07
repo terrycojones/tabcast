@@ -2,17 +2,25 @@ var OPTIONS = {
     endpointManager: null,
 
     init: function(){
-        chrome.runtime.getBackgroundPage(function(bgPage){
+        var _initEndpoints = function(bgPage){
             OPTIONS.endpointManager = bgPage.TC.endpointManager;
             OPTIONS.displayEndpoints();
-        });
+        };
 
-        // React to storage changes (which could occur due to the
-        // user using Chrome on another box & the changes being
-        // synchronized locally).
-        chrome.storage.onChanged.addListener(function(){
-            OPTIONS.displayEndpoints();
-        });
+        // chrome.runtime.getBackgroundPage doesn't exist in Chrome
+        // 20.0.1132.47 (and presumably earlier).
+        chrome.runtime.getBackgroundPage ?
+            chrome.runtime.getBackgroundPage(_initEndpoints) :
+            _initEndpoints(chrome.extension.getBackgroundPage());
+
+        if (chrome.storage){
+            // React to storage changes (which could occur due to the
+            // user using Chrome on another box & the changes being
+            // synchronized locally).
+            chrome.storage.onChanged.addListener(function(){
+                OPTIONS.displayEndpoints();
+            });
+        }
     },
 
     endpoints: function(){
