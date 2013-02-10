@@ -1,10 +1,29 @@
 # Tabcast
 
-Tabcast consists of a browser extension (Chrome only, for now) and a
-server. It allows users to do two things:
+Tabcast is designed to get streams of URLs into and out of your
+browser. The following is currently supported, on a per-tab
+basis:
 
-* Publish the URLs they visit to a Tabcast server
-* Track URLs sent to a Tabcast server
+     * Send all a tab's URLs to a (Tabcast server) group.
+     * Passively follow URLs sent to a group by other Tabcast users.
+     * Actively share control of a group browsing session.
+     * Monitor the real-time URL history of a group.
+
+Obvious initial uses involve shared browser sessions,
+for example during conference calls.
+
+ Although this initial set of possible actions is interesting and
+ useful, the wider goal is to make it possible for others to
+ easily implement their ideas around browser URL streams. Tabcast
+ is open source, which allows you to run a server locally and to
+ customize it to add your own functionality. Possible  uses run
+ from the very simple, such as a local server that simply saves
+ URL visits to a file, to much richer possibilities around
+ browsing, collaboration, discovery, research, and analysis.
+
+ For a more useful description, visit (tabcast.net)[http://tabcast.net].
+
+ Below are some rough technical notes.
 
 # Running the server locally
 
@@ -12,7 +31,7 @@ server. It allows users to do two things:
     $ npm install
     $ NODE_ENV=development node server.js
 
-## Mac OSX notes
+## Mac OSX
 
 You'll at least need the xcode command-line tools for the `npm install` command
 above to run successfully. Once you've installed them, run
@@ -25,7 +44,7 @@ via:
     $ brew install redis
     $ redis-server /usr/local/etc/redis.conf
 
-## Linux notes
+## Linux
 
 On Linux `apt-get install redis-server`.
 
