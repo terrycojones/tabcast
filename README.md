@@ -4,10 +4,10 @@ Tabcast is designed to get streams of URLs into and out of your
 browser. The following is currently supported, on a per-tab
 basis:
 
-     * Send all a tab's URLs to a (Tabcast server) group.
-     * Passively follow URLs sent to a group by other Tabcast users.
-     * Actively share control of a group browsing session.
-     * Monitor the real-time URL history of a group.
+* Send all a tab's URLs to a (Tabcast server) group.
+* Passively follow URLs sent to a group by other Tabcast users.
+* Actively share control of a group browsing session.
+* Monitor the real-time URL history of a group.
 
 Obvious initial uses involve shared browser sessions,
 for example during conference calls.
