@@ -14,14 +14,15 @@ for example during conference calls.
 
  Although this initial set of possible actions is interesting and
  useful, the wider goal is to make it possible for others to
- easily implement their ideas around browser URL streams. Tabcast
- is open source, which allows you to run a server locally and to
+ easily implement their ideas around browser URL streams. You can
+ run a Tabcast server locally and 
  customize it to add your own functionality. Possible  uses run
  from the very simple, such as a local server that simply saves
  URL visits to a file, to much richer possibilities around
  browsing, collaboration, discovery, research, and analysis.
 
- For a more useful description, visit (tabcast.net)[http://tabcast.net].
+ For a more useful description and a guide to using
+ Tabcast, visit http://tabcast.net
 
  Below are some rough technical notes.
 
@@ -46,7 +47,7 @@ via:
 
 ## Linux
 
-On Linux `apt-get install redis-server`.
+On Linux `apt-get install redis-server`, and you'll need npm (from https://npmjs.org/).
 
 # Notes on running your own Tabcast server
 
