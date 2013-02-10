@@ -1,1 +1,1 @@
-document.getElementById('install').style.display = 'none';
+document.getElementById('install-image').style.display = 'none';

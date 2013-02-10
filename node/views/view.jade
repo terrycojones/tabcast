@@ -7,27 +7,28 @@ block head
       |  for user #{username}
 
 block body
-  div.hero-unit
-    h1 Tabcast history
-    p
-      | All URLs sent to the 
-      a(href='/view/#{group}') #{group}
-      |  group
-      if username
-        |  by user
-        a(href='/view/#{group}/?username=#{username}')  #{username}
-  div
-    if urls.length
-      ul#urls.unstyled
-        for url in urls
-          li.url
-            a(href='#{url.url}') #{url.url}
-            br
-            | From 
-            a(href='/view/#{group}/?username=#{url.username}') #{url.username} 
-            | at #{url.date}
-    else
-      | no urls
+  body
+    div.hero-unit
+      h1 Tabcast history
+      p
+        | All URLs sent to the 
+        a(href='/view/#{group}') #{group}
+        |  group
+        if username
+          |  by user
+          a(href='/view/#{group}/?username=#{username}')  #{username}
+    div
+      if urls.length
+        ul#urls.unstyled
+          for url in urls
+            li.url
+              a(href='#{url.url}') #{url.url}
+              br
+              | From 
+              a(href='/view/#{group}/?username=#{url.username}') #{url.username} 
+              | at #{url.date}
+      else
+        | no urls
 
 block footer
   script(src='/js/socket.io.min.js')

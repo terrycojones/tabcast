@@ -4,7 +4,10 @@
     <title>Tabcast Settings</title>
     <link href="dependencies/bootstrap/css/bootstrap.min.css" rel="stylesheet"
           media="screen">
+    <link href="dependencies/bootstrap/css/bootstrap-responsive.min.css"
+          rel="stylesheet">
     <link href="options.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="dependencies/jquery-1.8.2.min.js"></script>
     <script src="dependencies/bootstrap/js/bootstrap.min.js"></script>
     <script src="dependencies/jqBootstrapValidation.js"></script>
@@ -17,33 +20,47 @@
       <div class="span1"></div>
       <div class="span11">
         <div class="page-header">
-          <h1>Tabcast <small>Broadcast and track URLs on a tab-by-tab
-              basis</small></h1>
+          <h1>
+            Tabcast <small>Broadcast and receive tab URL streams</small>
+          </h1>
         </div>
 
-        <h3>Groups</h3>
+        <h3>Defining Tabcast groups</h3>
         <p>
-          Below you can define Tabcast groups that you wish to track and
-          broadcast URLs to.  Groups are specified with the following details:
+          Below you can define the Tabcast groups you want to track and/or
+          broadcast URLs to.
+          For more information on using Tabcast in general, visit
+          <a href="http://tabcast.net">tabcast.net</a>.
+          Each Tabcast group is specified with the following details:
         </p>
 
         <dl id="definitions">
+
           <dt>Nickname</dt>
-          <dd>A nickname is a short memorable name for a group. You (currently)
-            cannot change it, though groups can be deleted.
+          <dd>A short memorable name for a group on a
+            Tabcast server. It is just a local name, for your convenience.
+            Group nicknames will be shown in Chrome's context menu.
           </dd>
+
           <dt>Server URL</dt>
-          <dd>The URL of the Tabcast server</dd>
+          <dd>The URL of the Tabcast server for the group. If in doubt, use
+            <span class="text-info">http://tabcast.net/</span>
+            as your server. You can also run your own
+            server (<a href="https://github.com/terrycojones/tabcast">Get the
+            Tabcast source from Github</a>).</dd>
+
           <dt>Group name</dt>
-          <dd>The name of the group on the server</dd>
-          <dt>User name</dt>
-          <dd><span class="text-info">Optional.</span> The user name you wish
-            to use on the server.</dd>
-          <dt>Password</dt>
-          <dd><span class="text-info">Optional.</span> A password to identify
-            yourself on the server.
+          <dd>The name of the group on the Tabcast server.</dd>
+
+          <dt>User name <span class="text-info">(Optional)</span></dt>
+          <dd>The user name you wish to use on the server.</dd>
+
+          <dt>Password <span class="text-info">(Optional)</span></dt>
+          <dd>A password to identify yourself on the server.
             <span class="text-warning">Note: passwords are stored locally by
-              Chrome, in plaintext, and are NOT secure.</span></dd>
+              Chrome, in plaintext, and are therefore not very secure. Do not
+              re-use a password that you use elsewhere.</span></dd>
+
         </dl>
 
         <div id="existing-endpoints"></div>

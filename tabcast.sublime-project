@@ -1,0 +1,25 @@
+{
+  "folders":
+  [
+    {
+      "path": ".",
+      "file_exclude_patterns":
+      [
+        "chrome/PRIVATE-KEY"
+      ],
+      "folder_exclude_patterns":
+      [
+        ".git",
+        "chrome/export",
+        "chrome/dependencies",
+        "node/node_modules"
+      ]
+    }
+  ],
+
+  "settings":
+  {
+    "ensure_newline_at_eof_on_save": true,
+    "tab_size": 4
+  }
+}

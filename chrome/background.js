@@ -113,7 +113,7 @@ var TC = {
             restoreSavedEndpoints();
 
             viewHistoryMenuItem = chrome.contextMenus.create({
-                title: 'See the URL history for',
+                title: 'See URL history for',
                 contexts: ['all']
             });
 
@@ -123,7 +123,7 @@ var TC = {
             });
 
             sendMenuItem = chrome.contextMenus.create({
-                title: 'Send just the current URL to',
+                title: 'Send the current URL to',
                 contexts: ['all']
             });
 
@@ -451,10 +451,10 @@ var TC = {
                 if (tabs[tabId].tracking){
                     // This tab is tracking an endpoint.
                     if (tab.url !== tabs[tabId].tracking.url){
-                        // The tab has not just gone to a URL it was sent
-                        // to.  Instead, the user has clicked on a link or
-                        // changed the URL in the address bar. Send the new
-                        // URL to the group.
+                        // The tab has not just loaded a URL we sent it to.
+                        // Instead, the user has clicked a link or changed the
+                        // URL in the address bar. Send the new URL to the
+                        // group.
                         broadcast(tab, tabs[tabId].tracking.nickname);
                     }
                     updateBadge(tabId);

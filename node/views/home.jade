@@ -4,17 +4,251 @@ block head
   title Tabcast!
   link(rel="chrome-webstore-item", href="https://chrome.google.com/webstore/detail/nknjamdijihneiclbpmcmfklakjkgdpf")
 
-
 block body
-  div.hero-unit
-    h1 Tabcast
-    p Welcome to Tabcast
-  div
-    p.
-      This is the site
-      where you'll find it all!
-    p
-      img#install(src="images/add-to-chrome.png")
+  body(data-spy="scroll", data-target=".bs-docs-sidebar")
+    header#overview(class="jumbotron subhead")
+      div.container
+        h1 Tabcast
+        p.lead Broadcast and receive tab URL streams
+        img#install-image(src="images/add-to-chrome.png")
+
+    div.container
+      div.row
+        div.span3.bs-docs-sidebar
+          ul.nav.nav-list.bs-docs-sidenav
+            li
+              a(href="#welcome")
+                i.icon-chevron-right
+                | Welcome
+            li
+              a(href="#usage")
+                i.icon-chevron-right
+                | Using Tabcast
+            li
+              a(href="#groups")
+                i.icon-chevron-right
+                | Groups
+            li
+              a(href="#limitations")
+                i.icon-chevron-right
+                | Limitations
+            li
+              a(href="#about")
+                i.icon-chevron-right
+                | About Tabcast
+        div.span9
+
+          section#welcome
+            div.page-header
+              h1 Welcome
+            p
+
+              | Tabcast is designed to get streams of URLs into and out of your
+              | browser. The following is currently supported, on a per-tab
+              | basis:
+
+              ul
+                li Send all a tab's URLs to a (Tabcast server) group.
+                li Passively follow URLs sent to a group by other Tabcast users.
+                li Actively share control of a group browsing session.
+                li Monitor the real-time URL history of a group.
+
+            p
+
+              | Obvious initial uses involve shared browser sessions,
+              | for example during conference calls.
+
+            p
+
+              | Although this initial set of possible actions is interesting and
+              | useful, the wider goal is to make it possible for others to
+              | easily implement their ideas around browser URL streams. Tabcast
+              | is open source, which allows you to run a server locally and to
+              | customize it to add your own functionality. Possible  uses run
+              | from the very simple, such as a local server that simply saves
+              | URL visits to a file, to much richer possibilities around
+              | browsing, collaboration, discovery, research, and analysis.
+
+          section#usage
+            div.page-header
+              h1 Using Tabcast
+            p
+
+              | The Tabcast extension installs a browser context menu. Right-
+              | click to see it (or control-click if you're on a Mac with a one-
+              | button mouse). Mouse over the Tabcast menu item, and you'll
+              | see something like this:
+              img.context-menu(src="images/context-menu.png")
+
+            p
+
+              | Now move your mouse to the right, over the small arrows. For
+              | each possible action, you'll be shown a list of available groups
+              | to take the action on. If you've just installed Tabcast, you'll
+              | only see one group, called 'public', like this:
+
+              img.context-menu(src="images/full-context-menu.png")
+
+            h3 Tabcast actions
+
+            dl
+              dt See URL history for ...
+              dd
+                | Will show you the URLs that have be sent to the group you
+                | select. The history page will automatically update when
+                | new URLs are sent to the group.
+
+              dt Send all URLs from this tab to ...
+              dd
+                | All the URLs visited by this tab will be broadcast ("tabcast")
+                | to the group. When a tab is broadcasting its URLs, the Tabcast
+                | icon in Chrome will show a small red badge with a count of the
+                | number of groups that URLs are being sent to, like this
+                img.browser-action-icon(src="images/broadcast.png")
+                | To see the groups being sent to, look in the context menu.
+
+              dt Send the current URL to ...
+              dd
+                | Just the URL currently being visited by this tab will be sent
+                | to the group. You can use this to easily send the current URL
+                | from any tab to any group you like.
+
+              dt Synchronize this tab with ...
+              dd
+                | When a tab is synchronized with a group, it will automatically
+                | update to show new URLs sent to the group. The Tabcast icon will
+                | show a small green badge with an "S" in it to indicate that
+                | the tab is synchronized, like this
+                img.browser-action-icon(src="images/synchronized.png")
+                | The context menu will show you what group you're synchronized
+                | with, in case you forget. Note that when you're synchronized,
+                | that clicks you make in the tab will be sent to the group so
+                | anyone else who is also synchronized will see their tab update
+                | too.
+
+            h3 Understand Tabcast by playing with it locally
+
+            p
+
+              | You can experiment with the various Tabcast capabilities by
+              | creating a new group (see below) and several tabs in your
+              | browser. In a new tab, synchronize with your group. In another
+              | tab, broadcast all URLs to the group and then browse to some
+              | sites. In another, view the group's history. In another, click
+              | to send just that tab's URL to the group. Now try it with a
+              | friend or group of friends, or during pair programming or on a
+              | call, etc.  If you synchronize two tabs with the group, notice
+              | how clicking a link in either one drives the other to the same
+              | URL.
+
+          section#groups
+            div.page-header
+              h1 Groups
+            p
+              | To create a new Tabcast group, right-click the extension icon
+              img.browser-action-icon(src="images/logo-19.png")
+              | and select Options. On the options page you'll find a summary
+              | of the details needed to specify a group. Click the 
+              img#add-nickname-icon.browser-action-icon(src="images/add-nickname.png")
+              | icon to add a group, and fill in the fields. For example, below
+              | I am adding a new group nicknamed 'wikipedia'. 
+
+            img#new-group(src="images/new-group.png")
+
+            h3 Group nicknames appear in the context menu
+
+            p
+
+              | After clicking Add, the new group's nickname ('wikipedia' in
+              | our example) will appear in Chrome's Tabcast context menu:
+
+              img.context-menu(src="images/wikipedia-context-menu.png")
+
+            h3 Notes on groups
+
+            ul
+              li A group nickname is entirely local. It is displayed in the
+                | Tabcast context menu and on the options page. It can be
+                | the same as the name of the group on the server, if you like.
+              li There is an open Tabcast server at 
+                span.text-info http://tabcast.net
+                | . This allows anyone to create groups without needing to
+                | run their own server.
+              li Usernames are optional.
+              li If you do not specify a username, the URLs you send to the
+                | group will be marked as from '&lt;anon&gt;'.
+              li If you specify a username but no password, that username will
+                | appear next to any URLs you send, but anyone else can also
+                | use the same username.
+              li If you specify a username and a password, you'll make sure
+                | no one else can use that name in the group.  Note that the
+                | first time a password is specified for a username, that
+                | becomes the password for that user.
+
+
+          section#limitations
+            div.page-header
+              h1 Joint browsing limitations
+            p
+
+              | When tabs are synchronized through Tabcast, the simultaneous
+              | updating is extremely fast and convenient. But there are some
+              | common situations that Tabcast is not designed to handle. For
+              | example, cookies sent to sites by different people's browsers
+              | will differ. If one user starts to fill out a form, the other
+              | user will not see the entered text.
+
+            p
+
+              | Tabcast is not meant to be a screen-sharing application. It just
+              | happens to be useful for that in some simple cases. It's
+              | designed to help get streams of URLs out of browsers for further
+              | processing. Sending them to other people's browsers is one
+              | possible (and fun!) usage, but that doesn't provide a fully
+              | equivalent browsing experience.
+
+          section#about
+            div.page-header
+              h1 About Tabcast
+            p
+
+              | The design of this page was taken shamelessly from the wonderful 
+              a(href="http://twitter.github.com/bootstrap/getting-started.html")
+                |Twitter bootstrap docs
+              |, and Tabcast uses bootstrap for all its UI needs.
+              | Tabcast also makes use of these great open-source packages: 
+              a(href="http://mustache.github.com/") Mustache
+              |, 
+              a(href="https://github.com/jonnyreeves/jquery-Mustache") jquery-Mustache
+              |, 
+              a(href="http://reactiveraven.github.com/jqBootstrapValidation/") jqBootstrapValidation.js
+              |, and 
+              a(href="http://socket.io/") Socket.IO
+              | . Tabcast is itself open source, you can get the source code 
+              a(href="https://github.com/terrycojones") from Github
+              | .              
+
+            p
+              | Tabcast was written by Terry Jones, CTO of 
+              a(href="http://fluidinfo.com") Fluidinfo
+              |  (
+              a(href="http://blogs.fluidinfo.com/terry") blog
+              | , 
+              a(href="https://github.com/terrycojones") github
+              | , 
+              a(href="https://twitter.com/terrycojones") twitter
+              | , 
+              a(href="http://jon.es/terry.html") more...
+              | ).  This is an early release. Many improvements could be
+              | made. See the 
+              a(href="https://github.com/terrycojones/tabcast/blob/master/TODO.md") TODO
+              |  file.
+
+      div.row
+        div.span3
+        div.span9
+          hr
+
 
 block footer
   script(src='/js/jquery-1.8.2.min.js')

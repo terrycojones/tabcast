@@ -5,3 +5,6 @@ chrome/export
 npm-debug.log
 node/node_modules
 node/tabcast.net-config
+tabcast.sublime-workspace
+.DS_Store
+tabcast.sublime-workspace
