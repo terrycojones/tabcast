@@ -211,6 +211,7 @@ var TC = {
             endpoints[nickname] = {
                 broadcastSocket: obj.SocketManager(url, nickname),
                 group: options.group,
+                groupPassword: options.groupPassword,
                 password: options.password,
                 trackSocket: obj.SocketManager(url, nickname, function(data){
                     shared.urlReceived(nickname, data);
@@ -250,6 +251,7 @@ var TC = {
                 var endpoint = endpoints[nickname];
                 result[nickname] = {
                     group: endpoint.group,
+                    groupPassword: endpoint.groupPassword,
                     nickname: nickname,
                     password: endpoint.password,
                     url: endpoint.url,
@@ -265,6 +267,7 @@ var TC = {
                 var endpoint = endpoints[nickname];
                 value.push({
                     group: endpoint.group,
+                    groupPassword: endpoint.groupPassword,
                     nickname: nickname,
                     password: endpoint.password,
                     url: endpoint.url,
@@ -580,6 +583,7 @@ var TC = {
                     try {
                         socket.emit('url', {
                             group: endpoint.group,
+                            groupPassword: endpoint.groupPassword,
                             password: endpoint.password,
                             url: tab.url,
                             username: endpoint.username
@@ -616,16 +620,25 @@ var TC = {
 
         var track = function(tabId, nickname){
             // Set the passed tab up to track a group on an endpoint.
-            var tab = tabs[tabId];
+            var tab = tabs[tabId],
+                endpoint = shared.endpoints[nickname];
             return $.when(
-                shared.endpoints[nickname].trackSocket.get()
+                endpoint.trackSocket.get()
             ).then(
                 function(socket){
-                    var group = shared.endpoints[nickname].group;
+                    var group = endpoint.group,
+                        options = {
+                            group: group,
+                            groupPassword: endpoint.groupPassword,
+                            password: endpoint.password,
+                            username: endpoint.username
+                        };
                     try {
-                        socket.emit('track', group);
-                        // Request the last url for the group, if any.
-                        socket.emit('last url', group);
+                        // Send the group tracking request, and ask for the last
+                        // url for the group so we can jump to it to synchronize
+                        // with the group's current URL.
+                        socket.emit('track', options);
+                        socket.emit('last url', options);
                     }
                     catch (e){
                         console.log('Could not send initial track commands ' +
@@ -633,17 +646,17 @@ var TC = {
                                     e.name + ': ' + e.message);
                         return;
                     }
-                    shared.endpoints[nickname].trackSocket.use();
+                    endpoint.trackSocket.use();
                     tab.tracking = {
                         group: group,
                         nickname: nickname,
-                        url: shared.endpoints[nickname].url + 'track/' + group
+                        url: endpoint.url + 'track/' + group
                     };
                     // Set the tab up to broadcast to the endpoint it is now
                     // tracking (if it's not doing that already).
                     if (!tabs[tabId].broadcast[nickname]){
                         tabs[tabId].broadcast[nickname] = true;
-                        shared.endpoints[nickname].broadcastSocket.use();
+                        endpoint.broadcastSocket.use();
                     }
                     console.log('Now tracking ' + nickname);
                 },
@@ -726,6 +739,7 @@ var TC = {
                         var endpoint = shared.endpoints[nickname];
                         socket.emit('url', {
                             group: endpoint.group,
+                            groupPassword: endpoint.groupPassword,
                             password: endpoint.password,
                             url: tab.url,
                             username: endpoint.username

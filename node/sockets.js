@@ -28,36 +28,51 @@ exports.init = function(db, server){
             socket.join(group);
         });
 
-        socket.on('last url', function(group){
-            console.log('Last URL request for group ' + group);
-            // Send just this socket the last URL (if any) for the group.
-            db.zrevrange(
-                'group:' + group + ':urls', 0, 1, 'withscores',
-                function(err, urls){
-                    if (err){
-                        console.log('Error getting last URL for group ' +
-                                    group, err);
-                    }
-                    else {
-                        if (urls.length){
-                            var data = JSON.parse(urls[0]);
-                            socket.emit('url', {
-                                date: urls[1],
-                                group: group,
-                                url: data.url,
-                                username: data.username
-                            });
+        socket.on('last url', function(options){
+            auth.check(options, function(valid){
+                delete options.password;
+                delete options.groupPassword;
+                if (valid){
+                    var group = options.group;
+                    console.log('Last URL request for group ' + group);
+                    // Send just this socket the last URL (if any) for the group.
+                    db.zrevrange(
+                        'group:' + group + ':urls', 0, 1, 'withscores',
+                        function(err, urls){
+                            if (err){
+                                console.log('Error getting last URL for group ' +
+                                            group, err);
+                            }
+                            else {
+                                if (urls.length){
+                                    var data = JSON.parse(urls[0]);
+                                    socket.emit('url', {
+                                        date: urls[1],
+                                        group: group,
+                                        url: data.url,
+                                        username: data.username
+                                    });
+                                }
+                            }
                         }
-                    }
+                    );
                 }
-            );
+                else {
+                    console.log('Incorrect auth details for user "' +
+                                data.username + '" requesting last url ' +
+                                ' from group ' + data.group);
+                    socket.emit('authentication failed', data);
+                }
+            });
         });
 
         socket.on('url', function(data){
             console.log('Got url ' + data.url + ' for group ' + data.group);
-            auth.checkPassword(data, function(valid){
-                delete data['password'];
+            auth.check(data, function(valid){
+                delete data.password;
+                delete data.groupPassword;
                 if (valid){
+                    console.log('Auth OK', data);
                     var date = Date.now();
                     data.username = data.username || 'anon';
                     db.zadd('group:' + data.group + ':urls', date,
@@ -76,6 +91,7 @@ exports.init = function(db, server){
                 }
             });
         });
+
         socket.on('disconnect', function (){
             var date = new Date();
             console.log(date.toUTCString() + ' - client disconnect');

@@ -46,17 +46,30 @@
           <dd>The URL of the Tabcast server for the group. If in doubt, use
             <span class="text-info">http://tabcast.net/</span>
             as your server. You can also run your own
-            server (<a href="https://github.com/terrycojones/tabcast">Get the
-            Tabcast source from Github</a>).</dd>
+            server (<a href="https://github.com/terrycojones/tabcast"
+            target="_blank">Get the Tabcast source from Github</a>).</dd>
 
           <dt>Group name</dt>
-          <dd>The name of the group on the Tabcast server.</dd>
+          <dd>The name of the group on the Tabcast server. You can join
+            an existing group or create your own.</dd>
 
-          <dt>User name <span class="text-info">(Optional)</span></dt>
-          <dd>The user name you wish to use on the server.</dd>
+          <dt>Group password <span class="muted">(Optional)</span></dt>
+          <dd>The password (if any) for the group. Groups without
+            passwords can be accessed by anyone. Note that if you do not
+            set a password on a new group and someone else does, you will
+            then be locked out (unless they tell you the password).</dd>
 
-          <dt>Password <span class="text-info">(Optional)</span></dt>
-          <dd>A password to identify yourself on the server.
+          <dt>User name <span class="muted">(Optional)</span></dt>
+          <dd>The user name you wish to use on the server, if any. If you
+            do not specify a username, your URLs will be shown as being from
+            &lt;anon&gt;</dd>
+
+          <dt>Password <span class="muted">(Optional)</span></dt>
+          <dd>A password to identify yourself on the server. You do not
+            have to use a password. If you do not, other users can use the
+            same username. In that case, if any of them does set a password
+            for the username your use of it will fail thereafter
+            (unless they tell you the password).
             <span class="text-warning">Note: passwords are stored locally by
               Chrome, in plaintext, and are therefore not very secure. Do not
               re-use a password that you use elsewhere.</span></dd>

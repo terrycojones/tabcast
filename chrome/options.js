@@ -57,6 +57,30 @@ var OPTIONS = {
             }
         });
 
+        // Hide the confirm group password section initially and only show it
+        // when the group password field is not empty.
+        $('#group-password-confirm').hide();
+        $('#group-password').keyup(function(evt){
+            if ($(this).val().length){
+                $('#group-password-confirm').show();
+            }
+            else {
+                $('#group-password-confirm').hide();
+            }
+        });
+
+        // Hide the confirm user password section initially and only show it
+        // when the user password field is not empty.
+        $('#password-confirm').hide();
+        $('#password').keyup(function(evt){
+            if ($(this).val().length){
+                $('#password-confirm').show();
+            }
+            else {
+                $('#password-confirm').hide();
+            }
+        });
+
         // Show tabs on clicks.
         $('#myTab a').click(function (e) {
             e.preventDefault();
@@ -109,6 +133,7 @@ var OPTIONS = {
             username = $('#username').val(),
             endpoint = {
                 group: $('#group').val(),
+                groupPassword: $('#group-password').val(),
                 nickname: nickname.val(),
                 url: $('#url').val()
             };
@@ -121,8 +146,8 @@ var OPTIONS = {
         // Tell the endpoint manager about the new endpoint.
         OPTIONS.endpointManager.addEndpoint(endpoint, true);
 
-        // Clear just the nickname field so the user can add another
-        // similar endpoint easily.
+        // Clear just the nickname field, in case the user wants to add
+        // another similar endpoint.
         nickname.val('');
 
         // Re-display endpoints.

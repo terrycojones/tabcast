@@ -48,6 +48,15 @@
                 </div>
               </div>
 
+              {{#groupPassword}}
+              <div class="control-group">
+                <label class="control-label" for="group-password">Group password</label>
+                <div class="controls">
+                  <input type="password" class="input-xlarge" name="group-password" value="{{groupPassword}}"/>
+                </div>
+              </div>
+              {{/groupPassword}}
+
               {{#username}}
               <div class="control-group">
                 <label class="control-label" for="username">User name</label>
@@ -82,7 +91,7 @@
                 <label class="control-label" for="nickname">Nickname</label>
                 <div class="controls">
                   <input type="text" class="input-xlarge" name="nickname"
-                         id="nickname" placeholder="A nickname for this server and group"
+                         id="nickname" placeholder="Your nickname for this group"
                          data-validation-callback-callback="OPTIONS.validateNicknameFromForm"
                          autofocus required/>
                 </div>
@@ -91,7 +100,7 @@
                 <label class="control-label" for="url">Server URL</label>
                 <div class="controls">
                   <!-- Be permissive with the regex that matches server URLs. -->
-                  <input type="text" name="url" id="url" value="http://"
+                  <input type="text" name="url" id="url" value="http://tabcast.net/"
                          class="input-xlarge"
                          data-validation-regex-regex="[a-z_0-9]+:\/\/[^\s]+$" 
                          data-validation-regex-message="Server URLs should look like http://host.name.com:port (the :port is optional)"
@@ -106,26 +115,45 @@
                 </div>
               </div>
               <div class="control-group">
+                <label class="control-label" for="group-password">Group password</label>
+                <div class="controls">
+                  <input type="password" class="input-xlarge" name="group-password"
+                         id="group-password"/>
+                  <span class="muted">(Optional)</span>
+                </div>
+              </div>
+              <div id="group-password-confirm" class="control-group">
+                <label class="control-label" for="group-password-confirm">Confirm group password</label>
+                <div class="controls">
+                  <input type="password" name="group-password-confirm"
+                         class="input-xlarge"
+                         data-validation-match-match="group-password"
+                         data-validation-match-message="Group passwords do not match"/>
+                </div>
+              </div>
+              <div class="control-group">
                 <label class="control-label" for="username">User name</label>
                 <div class="controls">
                   <input type="text" class="input-xlarge"
                          id="username" name="username"/>
+                  <span class="muted">(Optional)</span>
                 </div>
               </div>
               <div class="control-group">
-                <label class="control-label" for="password">Password</label>
+                <label class="control-label" for="password">User password</label>
                 <div class="controls">
                   <input type="password" class="input-xlarge" name="password"
                          id="password"/>
+                  <span class="muted">(Optional)</span>
                 </div>
               </div>
-              <div class="control-group">
-                <label class="control-label" for="passwordConfirm">Confirm password</label>
+              <div id="password-confirm" class="control-group">
+                <label class="control-label" for="password-confirm">Confirm user password</label>
                 <div class="controls">
-                  <input type="password" name="passwordConfirm"
+                  <input type="password" name="password-confirm"
                          class="input-xlarge"
                          data-validation-match-match="password"
-                         data-validation-match-message="Passwords do not match"/>
+                         data-validation-match-message="User passwords do not match"/>
                 </div>
               </div>
               <div class="form-actions">
