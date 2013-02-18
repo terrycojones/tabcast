@@ -5,6 +5,8 @@
 - home page
   - scroll spy
 
+- secure websockets http://www.exratione.com/2012/12/websockets-over-ssl-haproxy-nodejs-nginx/
+
 ## Low priority
 
 - make the server have a plugin architecture. Plugins receive incoming URLs.

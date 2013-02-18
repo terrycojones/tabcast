@@ -109,3 +109,47 @@ exports.check = function(data, callback){
         }
     });
 };
+
+exports.basic = function(req, res, next){
+    var group = req.params.group;
+    var requestAuth = function(){
+        res.header(
+            'WWW-Authenticate',
+            'Basic realm="Tabcast group ' + "'" + group + "'" + '"'
+        );
+        setTimeout(function(){
+            res.send('Authentication required', 401);
+        }, req.headers.authorization ? 5000 : 0);
+    };
+
+    getPassword(keyForGroup(group), function(groupPassword){
+        if (groupPassword){
+            // The group has a password, so we require authentication.
+            var credentials, data;
+            if (req.headers.authorization && req.headers.authorization.search('Basic ') === 0){
+                credentials = new Buffer(req.headers.authorization.split(' ')[1], 'base64')
+                    .toString().split(':');
+                data = {
+                    group: group,
+                    password: credentials[1],
+                    username: credentials[0]
+                };
+                checkPassword(data, function(userValid){
+                    if (userValid){
+                        next();
+                    }
+                    else {
+                        requestAuth();
+                    }
+                });
+            }
+            else {
+                requestAuth();
+            }
+        }
+        else {
+            // Group has no password.
+            next();
+        }
+    });
+};

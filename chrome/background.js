@@ -18,6 +18,7 @@ var TC = {
             if (socket === null){
                 var deferred = $.Deferred();
                 try {
+                    console.log('Connecting to ' + url);
                     socket = io.connect(url, {
                         'force new connection': true
                     });

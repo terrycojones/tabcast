@@ -23,9 +23,12 @@ exports.init = function(db, server){
     io.sockets.on('connection', function (socket){
         var date = new Date();
         console.log(date.toUTCString() + ' - connection received');
-        socket.on('track', function(group){
-            console.log('Tracking ' + group);
-            socket.join(group);
+
+        socket.on('track', function(options){
+            auth.check(options, function(valid){
+                console.log('Tracking ' + options.group);
+                socket.join(options.group);
+            });
         });
 
         socket.on('last url', function(options){

@@ -5,7 +5,8 @@ var port = 9999,
     redis = require('redis'),
     db = redis.createClient(),
     app = express(),
-    server = require('http').createServer(app);
+    server = require('http').createServer(app),
+    auth = require('./auth.js').basic;
 
 require('./sockets.js').init(db, server);
 
@@ -35,7 +36,7 @@ app.configure('production', function(){
     app.enable('trust proxy');
 });
 
-app.get('/track/:group', function(req, res){
+app.get('/track/:group', auth, function(req, res){
     console.log('Got /track request for group=' + req.params.group);
     // Send back some recent URLs, for now.
     db.zrevrange(
@@ -49,7 +50,7 @@ app.get('/track/:group', function(req, res){
     );
 });
 
-app.get('/view/:group', function(req, res){
+app.get('/view/:group', auth, function(req, res){
     var group = req.params.group,
         username = req.query.username;
     console.log('Got /view request for group=' + group);
@@ -81,8 +82,7 @@ app.get('/view/:group', function(req, res){
                     // host: req.protocol + '://' + req.host + ':' + port,
                     host: req.protocol + '://' + req.host,
                     urls: data,
-                    username: username,
-                    title: 'my fab title'
+                    username: username
                 });
             }
         }
